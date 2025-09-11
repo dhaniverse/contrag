@@ -1,0 +1,29 @@
+{
+  "database": {
+    "plugin": "postgres",
+    "config": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "contrag_test",
+      "user": "postgres",
+      "password": "password"
+    }
+  },
+  "vectorStore": {
+    "plugin": "pgvector",
+    "config": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "contrag_test",
+      "user": "postgres",
+      "password": "password"
+    }
+  },
+  "embedder": {
+    "plugin": "gemini",
+    "config": {
+      "apiKey": "your-gemini-api-key",
+      "model": "embedding-001"
+    }
+  }
+}

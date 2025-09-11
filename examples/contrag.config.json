@@ -1,0 +1,29 @@
+{
+  "database": {
+    "plugin": "postgres",
+    "config": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "myapp",
+      "user": "postgres",
+      "password": "password"
+    }
+  },
+  "vectorStore": {
+    "plugin": "weaviate",
+    "config": {
+      "url": "http://localhost:8080"
+    }
+  },
+  "embedder": {
+    "plugin": "openai",
+    "config": {
+      "apiKey": "your-openai-api-key",
+      "model": "text-embedding-ada-002"
+    }
+  },
+  "contextBuilder": {
+    "chunkSize": 1000,
+    "overlap": 200
+  }
+}

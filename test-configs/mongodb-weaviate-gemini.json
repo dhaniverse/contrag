@@ -1,0 +1,26 @@
+{
+  "database": {
+    "plugin": "mongodb",
+    "config": {
+      "url": "mongodb://admin:password@localhost:27017",
+      "database": "contrag_test"
+    }
+  },
+  "vectorStore": {
+    "plugin": "weaviate",
+    "config": {
+      "url": "http://localhost:8080"
+    }
+  },
+  "embedder": {
+    "plugin": "gemini",
+    "config": {
+      "apiKey": "your-gemini-api-key",
+      "model": "embedding-001"
+    }
+  },
+  "contextBuilder": {
+    "chunkSize": 800,
+    "overlap": 150
+  }
+}

@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # MongoDB for document storage
+  mongodb:
+    image: mongo:7.0
+    container_name: contrag-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: contrag_test
+    volumes:
+      - mongodb_data:/data/db
+      - ./docker/game-mongo-init.js:/docker-entrypoint-initdb.d/init.js:ro
+    networks:
+      - contrag-network
+
+  # PostgreSQL for relational data and vectors
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: contrag-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: contrag_test
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - contrag-network
+
+  # Weaviate for vector storage
+  weaviate:
+    image: semitechnologies/weaviate:1.22.4
+    container_name: contrag-weaviate
+    ports:
+      - "8080:8080"
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      CLUSTER_HOSTNAME: 'node1'
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - contrag-network
+
+volumes:
+  mongodb_data:
+  postgres_data:
+  weaviate_data:
+
+networks:
+  contrag-network:
+    driver: bridge

@@ -1,0 +1,21 @@
+{
+  "database": {
+    "plugin": "mongodb",
+    "config": {
+      "url": "mongodb://localhost:27017",
+      "database": "myapp"
+    }
+  },
+  "vectorStore": {
+    "plugin": "weaviate",
+    "config": {
+      "url": "http://localhost:8080"
+    }
+  },
+  "embedder": {
+    "plugin": "openai",
+    "config": {
+      "apiKey": "your-openai-api-key"
+    }
+  }
+}
