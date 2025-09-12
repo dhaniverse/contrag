@@ -2,7 +2,7 @@
   "database": {
     "plugin": "mongodb",
     "config": {
-      "url": "mongodb://admin:password@localhost:27017",
+      "url": "mongodb://admin:password@localhost:27018",
       "database": "contrag_test"
     }
   },
@@ -10,7 +10,7 @@
     "plugin": "pgvector",
     "config": {
       "host": "localhost",
-      "port": 5432,
+      "port": 5433,
       "database": "contrag_test", 
       "user": "postgres",
       "password": "password"

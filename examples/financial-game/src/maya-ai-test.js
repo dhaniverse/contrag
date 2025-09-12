@@ -4,7 +4,7 @@
  * personalized financial guidance in the game
  */
 
-const { ContragSDK } = require('./dist/index.js');
+const { ContragSDK } = require('contrag');
 const fs = require('fs');
 
 class MayaAITutor {

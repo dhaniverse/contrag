@@ -43,7 +43,6 @@
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
-    "contrag": "^1.0.0",
     "dotenv": "^16.3.1",
     "mongodb": "^6.3.0",
     "node-fetch": "^2.7.0",

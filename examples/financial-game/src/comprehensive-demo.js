@@ -1,4 +1,4 @@
-const { ContragSDK } = require('./dist/index.js');
+const { ContragSDK } = require('contrag');
 const fs = require('fs');
 
 async function buildComprehensiveUserRAG() {

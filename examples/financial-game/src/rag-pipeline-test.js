@@ -3,7 +3,7 @@
  * This script shows the full pipeline: data retrieval -> embedding -> storage -> query -> AI response
  */
 
-const { ContragSDK } = require('./dist/index.js');
+const { ContragSDK } = require('contrag');
 const fs = require('fs');
 
 async function demonstrateFullRAGPipeline() {
