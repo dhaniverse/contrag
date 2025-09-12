@@ -1,0 +1,49 @@
+# Source files
+src/
+*.ts
+!dist/
+
+# Tests
+test/
+test-configs/
+**/*.test.js
+**/*.test.ts
+coverage/
+
+# Development files
+.env
+.env.local
+.env.example
+docker-compose.yml
+docker/
+
+# Documentation (except README)
+docs/
+examples/
+
+# Build tools
+tsconfig.json
+jest.config.js
+.eslintrc.js
+
+# Version control
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
