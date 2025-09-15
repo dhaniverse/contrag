@@ -1,3 +1,4 @@
+````markdown
 # NPM Publishing Guide for Contrag
 
 ## ✅ Pre-Publishing Checklist (Completed)
@@ -170,3 +171,5 @@ After publishing, you can:
 ---
 
 Ready to publish! Just run `npm login` then `npm publish` 🚀
+
+````
