@@ -1,7 +1,7 @@
 {
   "name": "contrag",
-  "version": "1.0.0",
-  "description": "Runtime schema introspection and dynamic entity graph building for multi-relation entities with time series support",
+  "version": "2.0.0",
+  "description": "Advanced RAG integration library with runtime schema introspection, dynamic entity graph building, and comprehensive debugging tools for MongoDB, PostgreSQL, and vector stores",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -18,17 +18,28 @@
     "test:watch": "jest --watch",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build && npm test",
+    "preversion": "npm run lint && npm test",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
-    "schema",
-    "introspection",
-    "entity-graph",
+    "rag",
+    "retrieval-augmented-generation",
     "vector-store",
-    "embedding",
-    "postgres",
+    "embeddings",
+    "schema-introspection",
+    "entity-graph",
     "mongodb",
-    "time-series"
+    "postgres",
+    "pgvector",
+    "weaviate", 
+    "openai",
+    "gemini",
+    "time-series",
+    "debugging",
+    "cli",
+    "master-entities",
+    "system-prompts"
   ],
   "author": "Dave",
   "license": "MIT",

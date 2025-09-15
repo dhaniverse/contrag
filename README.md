@@ -1,17 +1,319 @@
-# Contrag
+# ContRAG - Advanced RAG Integration Library
 
-**Context Graph Builder** - A comprehensive Retrieval-Augmented Generation (RAG) system that intelligently builds context from your databases to power AI applications. Automatically understands data relationships and creates semantic search capabilities across complex database schemas.
+[![npm version](https://badge.fury.io/js/contrag.svg)](https://badge.fury.io/js/contrag)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🚀 Key Features
+ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) systems that automatically introspect your existing database schema, build comprehensive entity relationship graphs, and create intelligent vector stores for personalized context retrieval.
 
-- **🔍 Smart Schema Introspection** - Automatically understands your database structure  
-- **🕸️ Entity Relationship Mapping** - Discovers and maps data relationships
-- **🧠 Multi-Model AI Support** - Works with OpenAI, Gemini, Claude, and more
-- **📊 Multi-Database Support** - MongoDB, PostgreSQL, MySQL, and vector databases
-- **⚡ High Performance** - Optimized chunking and embedding strategies
-- **🔌 Plugin Architecture** - Extensible and customizable
-- **🖥️ CLI & SDK** - Both command-line tools and programmatic API
-- **📦 Zero Configuration** - Works with environment variables or config files
+## 🚀 What's New in v2.0
+
+### Major Features
+- **🎯 Master Entity Configuration** - Define entity relationships via config
+- **🤖 System Prompt Support** - Customize LLM behavior for different use cases  
+- **🔧 Comprehensive CLI Debugging** - Test connections, analyze data, manage vectors
+- **📊 Advanced Analytics** - Vector store stats, similarity search, health monitoring
+- **⚡ Production Ready** - Batch processing, monitoring, error handling
+
+### Enhanced CLI Commands
+```bash
+# Configuration & Testing
+contrag config init --template mongodb
+contrag config validate
+contrag test all
+
+# Data Analysis & Debugging
+contrag sample --entity User --uid 123
+contrag vector stats
+contrag vector search --text "user orders"
+
+# Schema & Relationships
+contrag introspect --format json
+```
+
+## ✨ Key Features
+
+### 🔄 Multi-Database Support
+- **PostgreSQL** - Full relational database support with foreign keys
+- **MongoDB** - Document database with automatic relationship inference
+- **Mixed Environments** - Use MongoDB for primary data, PostgreSQL for vectors
+
+### 🧠 AI Integration
+- **OpenAI Embeddings** - GPT-based embedding models
+- **Google Gemini** - Advanced embedding capabilities  
+- **System Prompts** - Customize AI behavior per use case
+
+### 📦 Vector Storage
+- **Weaviate** - Cloud-native vector database
+- **pgvector** - PostgreSQL extension for high-performance vectors
+- **Automatic Chunking** - Intelligent context splitting with overlap
+
+### 🎯 Entity Relationship Mapping
+- **Automatic Schema Detection** - Introspect existing database schemas
+- **Master Entity Configuration** - Define primary entities and relationships
+- **Time Series Support** - Handle temporal data automatically
+- **Complex Relationships** - One-to-one, one-to-many, many-to-many support
+
+## 🛠 Quick Start
+
+### Installation
+
+```bash
+npm install contrag
+
+# For global CLI access
+npm install -g contrag
+```
+
+### Basic Setup
+
+```bash
+# Initialize configuration
+contrag config init --template basic
+
+# Edit contrag.config.json with your credentials
+# Test connections
+contrag config validate
+```
+
+### Example Configuration
+
+```json
+{
+  "database": {
+    "plugin": "mongodb",
+    "config": {
+      "url": "mongodb://localhost:27017",
+      "database": "your_app"
+    }
+  },
+  "vectorStore": {
+    "plugin": "pgvector",
+    "config": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "vectors",
+      "user": "postgres",
+      "password": "password"
+    }
+  },
+  "embedder": {
+    "plugin": "gemini",
+    "config": {
+      "apiKey": "your-gemini-api-key",
+      "model": "embedding-001"
+    }
+  },
+  "masterEntities": [
+    {
+      "name": "users",
+      "primaryKey": "_id",
+      "relationships": {
+        "orders": {
+          "entity": "orders",
+          "type": "one-to-many",
+          "localKey": "_id",
+          "foreignKey": "user_id"
+        }
+      }
+    }
+  ],
+  "systemPrompts": {
+    "default": "You are a helpful assistant with access to user data.",
+    "recommendations": "Focus on personalized product recommendations."
+  }
+}
+```
+
+### SDK Usage
+
+```javascript
+const { ContragSDK } = require('contrag');
+
+const sdk = new ContragSDK();
+await sdk.configure(config);
+
+// Build context for a user
+const result = await sdk.buildFor('users', '123');
+
+// Query the context
+const response = await sdk.query('users:123', 'What orders has this user placed?');
+
+// Get related sample data
+const sampleData = await sdk.getRelatedSampleData('users', '123');
+```
+
+## 📋 CLI Commands
+
+### Configuration Management
+```bash
+contrag config init [--template] [--force]    # Initialize configuration
+contrag config validate                       # Validate and test connections
+```
+
+### Connection Testing
+```bash
+contrag test all                             # Test all connections
+contrag test db                              # Test database only
+contrag test vector                          # Test vector store only
+contrag test embedder                        # Test embedder only
+```
+
+### Schema Analysis
+```bash
+contrag introspect [--format json]          # Analyze database schema
+contrag sample --entity User [--uid 123]    # Get sample data
+```
+
+### Vector Store Management
+```bash
+contrag vector stats                         # Show statistics
+contrag vector namespaces                    # List namespaces
+contrag vector search --text "query"        # Search vectors
+```
+
+### Context Building & Querying
+```bash
+contrag build --entity User --uid 123       # Build context
+contrag query --namespace User:123 --query "text"  # Query context
+```
+
+## 🏗 Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Your Database │    │   AI Embeddings  │    │  Vector Storage │
+│                 │    │                  │    │                 │
+│  PostgreSQL     │────│     OpenAI       │────│    Weaviate     │
+│  MongoDB        │    │     Gemini       │    │    pgvector     │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                        │                        │
+         └────────────────────────┼────────────────────────┘
+                                  │
+                        ┌─────────▼─────────┐
+                        │                   │
+                        │   ContRAG SDK     │
+                        │   - Schema Analysis│
+                        │   - Relationship  │
+                        │     Mapping       │
+                        │   - Context Build │
+                        │   - Query Engine  │
+                        └───────────────────┘
+```
+
+## 🎯 Use Cases
+
+### E-commerce Personalization
+- Build user profiles from order history, preferences, and behavior
+- Generate personalized product recommendations
+- Provide context-aware customer support
+
+### CRM Enhancement  
+- Create comprehensive customer profiles from interactions
+- Generate insights from deal history and communications
+- Enable intelligent lead scoring and recommendations
+
+### Content Management
+- Build user reading history and preferences
+- Generate personalized content recommendations
+- Create context-aware search and discovery
+
+### Analytics & Insights
+- Analyze user behavior patterns across entities
+- Generate business intelligence from relationship data
+- Create predictive models from historical patterns
+
+## 📚 Documentation
+
+- **[Enhanced Features Guide](docs/ENHANCED_FEATURES.md)** - Complete feature documentation
+- **[MongoDB + Gemini + pgvector Setup](docs/MONGODB_GEMINI_PGVECTOR_SETUP.md)** - Step-by-step integration guide  
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - System architecture overview
+- **[API Reference](docs/API_REFERENCE.md)** - Complete SDK documentation
+
+## 🔧 Configuration Templates
+
+### Available Templates
+- **`basic`** - PostgreSQL + Weaviate + OpenAI (simple setup)
+- **`mongodb`** - MongoDB + Weaviate + OpenAI (document database)  
+- **`postgres`** - PostgreSQL + pgvector + Gemini (all Postgres)
+- **`advanced`** - Full configuration with master entities and system prompts
+
+```bash
+# Use templates for quick setup
+contrag config init --template mongodb
+contrag config init --template postgres  
+contrag config init --template advanced
+```
+
+## 🌟 Advanced Features
+
+### Master Entity Configuration
+Define complex entity relationships and traversal rules:
+
+```json
+{
+  "masterEntities": [
+    {
+      "name": "User",
+      "primaryKey": "id",
+      "relationships": {
+        "orders": {"entity": "Order", "type": "one-to-many", ...},
+        "profile": {"entity": "UserProfile", "type": "one-to-one", ...}
+      },
+      "sampleFilters": {"active": true}
+    }
+  ]
+}
+```
+
+### System Prompts
+Customize AI behavior for different scenarios:
+
+```json
+{
+  "systemPrompts": {
+    "default": "General assistant behavior...",
+    "recommendations": "Focus on product recommendations...",  
+    "support": "Provide customer support...",
+    "analytics": "Analyze data patterns..."
+  }
+}
+```
+
+### Production Monitoring
+Built-in health checks and monitoring:
+
+```javascript
+// Health monitoring
+const dbHealth = await sdk.testDatabaseConnection();
+const vectorHealth = await sdk.testVectorStoreConnection();
+const stats = await sdk.getVectorStoreStats();
+```
+
+## 🚀 Performance & Scalability
+
+- **Batch Processing** - Handle large datasets efficiently
+- **Connection Pooling** - Optimize database connections
+- **Configurable Chunking** - Balance context size vs. performance
+- **Relationship Limits** - Prevent entity graph explosion
+- **Caching Support** - Cache frequently accessed data
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **GitHub Issues** - Bug reports and feature requests
+- **Documentation** - Comprehensive guides and examples  
+- **Community** - Join our Discord for discussions
+
+---
+
+**ContRAG v2.0** - Making RAG integration simple, powerful, and production-ready.
 
 ## Installation
 
