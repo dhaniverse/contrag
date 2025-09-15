@@ -5,7 +5,7 @@
 
 ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) systems that automatically introspect your existing database schema, build comprehensive entity relationship graphs, and create intelligent vector stores for personalized context retrieval.
 
-## 🚀 What's New in v2.0
+## 🚀 What's New in v1.1
 
 ### Major Features
 - **🎯 Master Entity Configuration** - Define entity relationships via config
@@ -313,7 +313,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**ContRAG v2.0** - Making RAG integration simple, powerful, and production-ready.
+**ContRAG v1.1** - Making RAG integration simple, powerful, and production-ready.
 
 ## Installation
 
