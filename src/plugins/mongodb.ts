@@ -1,5 +1,6 @@
 import { MongoClient, Db, Collection } from 'mongodb';
-import { DBPlugin, EntitySchema, Field, Relationship, EntityGraph } from '../types';
+import { DBPlugin, EntitySchema, Field, Relationship, EntityGraph, ConnectionTestResult, SampleDataResult, MasterEntityConfig } from '../types';
+import { DEFAULT_CONFIG, DB_CONSTANTS } from '../constants';
 
 export class MongoPlugin implements DBPlugin {
   public readonly name = 'mongodb';
@@ -215,7 +216,7 @@ export class MongoPlugin implements DBPlugin {
               if (Array.isArray(document[rel.foreignKey])) {
                 // Array of references
                 const relatedEntities: EntityGraph[] = [];
-                const refs = document[rel.foreignKey].slice(0, 10); // Limit to prevent explosion
+                const refs = document[rel.foreignKey].slice(0, DEFAULT_CONFIG.RELATIONSHIP_LIMIT); // Limit to prevent explosion
                 
                 for (const ref of refs) {
                   try {
@@ -240,7 +241,7 @@ export class MongoPlugin implements DBPlugin {
                 const reverseQuery: any = {};
                 reverseQuery[rel.foreignKey] = document._id;
                 
-                const relatedDocs = await targetCollection.find(reverseQuery).limit(10).toArray();
+                const relatedDocs = await targetCollection.find(reverseQuery).limit(DEFAULT_CONFIG.RELATIONSHIP_LIMIT).toArray();
                 const relatedEntities: EntityGraph[] = [];
                 
                 for (const doc of relatedDocs) {
@@ -290,6 +291,174 @@ export class MongoPlugin implements DBPlugin {
 
   supportsTimeSeries(): boolean {
     return true; // MongoDB supports time series collections
+  }
+
+  async testConnection(): Promise<ConnectionTestResult> {
+    const startTime = Date.now();
+    
+    try {
+      if (!this.client || !this.db) {
+        throw new Error('Database not connected');
+      }
+
+      await this.db.admin().ping();
+      const latency = Date.now() - startTime;
+      
+      return {
+        plugin: this.name,
+        connected: true,
+        latency,
+        details: {
+          database: this.db.databaseName,
+          serverStatus: 'ping successful'
+        }
+      };
+    } catch (error) {
+      return {
+        plugin: this.name,
+        connected: false,
+        error: String(error)
+      };
+    }
+  }
+
+  async getSampleData(entity: string, limit: number = DEFAULT_CONFIG.SAMPLE_LIMIT, filters?: Record<string, any>): Promise<Record<string, any>[]> {
+    if (!this.db) {
+      throw new Error('Database not connected');
+    }
+
+    const collection = this.db.collection(entity);
+    const query = filters || {};
+    
+    const documents = await collection.find(query).limit(limit).toArray();
+    return documents.map(doc => ({ ...doc, _id: doc._id.toString() }));
+  }
+
+  async getRelatedSampleData(masterEntity: string, uid: string, config?: MasterEntityConfig): Promise<SampleDataResult> {
+    if (!this.db) {
+      throw new Error('Database not connected');
+    }
+
+    const collection = this.db.collection(masterEntity);
+    
+    // Try to find the master document
+    let masterDoc;
+    try {
+      // Try ObjectId first if it looks like one
+      if (this.isObjectIdString(uid)) {
+        const { ObjectId } = require('mongodb');
+        masterDoc = await collection.findOne({ _id: new ObjectId(uid) });
+      }
+    } catch {
+      // Fall back to string search
+      masterDoc = null;
+    }
+    
+    // If not found, try other common ID fields
+    if (!masterDoc) {
+      const searchQueries = [
+        { id: uid },
+        { user_id: uid },
+        { userId: uid }
+      ];
+      
+      // Try string _id as fallback
+      try {
+        searchQueries.unshift({ _id: uid } as any);
+      } catch {
+        // Ignore if conversion fails
+      }
+      
+      for (const query of searchQueries) {
+        masterDoc = await collection.findOne(query);
+        if (masterDoc) break;
+      }
+    }
+    
+    if (!masterDoc) {
+      throw new Error(`No document found for ${masterEntity} with id ${uid}`);
+    }
+
+    const relatedData: { [entityName: string]: Record<string, any>[] } = {};
+    let totalRecords = 1;
+
+    // Use provided config or introspect relationships
+    if (config?.relationships) {
+      for (const [relationName, relationConfig] of Object.entries(config.relationships)) {
+        try {
+          const targetCollection = this.db.collection(relationConfig.entity);
+          let docs: any[];
+          
+          if (relationConfig.type === 'one-to-many' || relationConfig.type === 'many-to-many') {
+            // Find documents that reference the master
+            const query: any = {};
+            query[relationConfig.foreignKey] = masterDoc[relationConfig.localKey];
+            docs = await targetCollection.find(query).limit(DEFAULT_CONFIG.RELATIONSHIP_LIMIT).toArray();
+          } else {
+            // Follow reference
+            const refValue = masterDoc[relationConfig.localKey];
+            if (refValue) {
+              const query: any = {};
+              query[relationConfig.foreignKey] = refValue;
+              docs = await targetCollection.find(query).toArray();
+            } else {
+              docs = [];
+            }
+          }
+          
+          if (docs.length > 0) {
+            relatedData[relationName] = docs.map(doc => ({ ...doc, _id: doc._id.toString() }));
+            totalRecords += docs.length;
+          }
+        } catch (error) {
+          console.warn(`Failed to load relationship ${relationName}: ${error}`);
+        }
+      }
+    } else {
+      // Fallback to schema introspection
+      const schemas = await this.introspectSchema();
+      const entitySchema = schemas.find(s => s.name === masterEntity);
+      
+      if (entitySchema) {
+        for (const rel of entitySchema.relationships.slice(0, 5)) { // Limit relationships
+          try {
+            const targetCollection = this.db.collection(rel.targetEntity);
+            let docs: any[];
+            
+            if (rel.type === 'many-to-one') {
+              const refValue = masterDoc[rel.foreignKey];
+              if (refValue) {
+                const query: any = {};
+                query[rel.referencedKey] = refValue;
+                docs = await targetCollection.find(query).toArray();
+              } else {
+                docs = [];
+              }
+            } else {
+              // Reverse lookup
+              const query: any = {};
+              query[rel.foreignKey] = masterDoc._id;
+              docs = await targetCollection.find(query).limit(DEFAULT_CONFIG.RELATIONSHIP_LIMIT).toArray();
+            }
+            
+            if (docs.length > 0) {
+              relatedData[rel.targetEntity] = docs.map(doc => ({ ...doc, _id: doc._id.toString() }));
+              totalRecords += docs.length;
+            }
+          } catch (error) {
+            console.warn(`Failed to load relationship ${rel.targetEntity}: ${error}`);
+          }
+        }
+      }
+    }
+
+    return {
+      masterEntity,
+      uid,
+      data: { ...masterDoc, _id: masterDoc._id.toString() },
+      relatedData,
+      totalRecords
+    };
   }
 
   private analyzeDocument(doc: any, fieldMap: Map<string, { type: string; nullable: boolean }>): void {

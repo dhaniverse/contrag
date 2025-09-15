@@ -65,6 +65,10 @@ export interface DBPlugin {
   introspectSchema(): Promise<EntitySchema[]>;
   buildEntityGraph(masterEntity: string, uid: string, maxDepth?: number): Promise<EntityGraph>;
   supportsTimeSeries(): boolean;
+  // Enhanced debugging methods
+  testConnection?(): Promise<ConnectionTestResult>;
+  getSampleData?(entity: string, limit?: number, filters?: Record<string, any>): Promise<Record<string, any>[]>;
+  getRelatedSampleData?(masterEntity: string, uid: string, config?: MasterEntityConfig): Promise<SampleDataResult>;
 }
 
 // Vector store plugin interface
@@ -75,14 +79,46 @@ export interface VectorStorePlugin {
   store(chunks: EmbeddedChunk[]): Promise<void>;
   query(namespace: string, query: string, limit?: number): Promise<ContextChunk[]>;
   delete(namespace: string): Promise<void>;
+  // Enhanced debugging methods
+  listNamespaces?(): Promise<string[]>;
+  getStats?(): Promise<VectorStoreStats>;
+  testConnection?(): Promise<ConnectionTestResult>;
+  searchSimilar?(embedding: number[], namespace?: string, limit?: number): Promise<VectorSearchResult[]>;
 }
 
 // Embedder plugin interface
 export interface EmbedderPlugin {
   name: string;
   configure(config: Record<string, any>): Promise<void>;
-  embed(texts: string[]): Promise<number[][]>;
+  embed(texts: string[], systemPrompt?: string): Promise<number[][]>;
   getDimensions(): number;
+  // Enhanced debugging methods
+  testConnection?(): Promise<ConnectionTestResult>;
+  generateWithPrompt?(text: string, systemPrompt: string): Promise<string>;
+}
+
+// Master entity configuration
+export interface MasterEntityConfig {
+  name: string;
+  primaryKey: string;
+  relationships?: {
+    [relationName: string]: {
+      entity: string;
+      type: 'one-to-one' | 'one-to-many' | 'many-to-one' | 'many-to-many';
+      localKey: string;
+      foreignKey: string;
+      through?: string; // For many-to-many
+    };
+  };
+  sampleFilters?: Record<string, any>;
+}
+
+// System prompt configuration
+export interface SystemPromptConfig {
+  default?: string;
+  contextBuilder?: string;
+  queryProcessor?: string;
+  custom?: Record<string, string>;
 }
 
 // Configuration types
@@ -102,7 +138,11 @@ export interface ContragConfig {
   contextBuilder?: {
     chunkSize?: number;
     overlap?: number;
+    maxDepth?: number;
+    relationshipLimit?: number;
   };
+  masterEntities?: MasterEntityConfig[];
+  systemPrompts?: SystemPromptConfig;
 }
 
 // SDK response types
@@ -120,4 +160,37 @@ export interface BuildResult {
   namespace: string;
   success: boolean;
   error?: string;
+}
+
+// New types for enhanced functionality
+export interface ConnectionTestResult {
+  plugin: string;
+  connected: boolean;
+  latency?: number;
+  error?: string;
+  details?: Record<string, any>;
+}
+
+export interface SampleDataResult {
+  masterEntity: string;
+  uid: string;
+  data: Record<string, any>;
+  relatedData: {
+    [entityName: string]: Record<string, any>[];
+  };
+  totalRecords: number;
+}
+
+export interface VectorStoreStats {
+  namespaces: string[];
+  totalVectors: number;
+  dimensions: number;
+  storageSize?: string;
+}
+
+export interface VectorSearchResult {
+  id: string;
+  score: number;
+  metadata: Record<string, any>;
+  content?: string;
 }

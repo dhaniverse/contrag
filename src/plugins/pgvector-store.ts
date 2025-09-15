@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
-import { VectorStorePlugin, EmbeddedChunk, ContextChunk } from '../types';
+import { VectorStorePlugin, EmbeddedChunk, ContextChunk, ConnectionTestResult, VectorStoreStats, VectorSearchResult } from '../types';
+import { DEFAULT_CONFIG, VECTOR_CONSTANTS } from '../constants';
 
 export class PgVectorPlugin implements VectorStorePlugin {
   public readonly name = 'pgvector';
@@ -199,6 +200,147 @@ export class PgVectorPlugin implements VectorStorePlugin {
       
     } catch (error) {
       throw new Error(`Failed to ensure pgvector schema: ${error}`);
+    } finally {
+      client.release();
+    }
+  }
+
+  async testConnection(): Promise<ConnectionTestResult> {
+    const startTime = Date.now();
+    
+    try {
+      if (!this.pool) {
+        throw new Error('PostgreSQL not connected');
+      }
+
+      const client = await this.pool.connect();
+      
+      // Test pgvector extension
+      const extensionCheck = await client.query(`
+        SELECT * FROM pg_extension WHERE extname = 'vector'
+      `);
+      
+      client.release();
+      const latency = Date.now() - startTime;
+      
+      return {
+        plugin: this.name,
+        connected: true,
+        latency,
+        details: {
+          pgvectorInstalled: extensionCheck.rows.length > 0,
+          tableName: this.tableName,
+          dimensions: this.embeddingDimensions
+        }
+      };
+    } catch (error) {
+      return {
+        plugin: this.name,
+        connected: false,
+        error: String(error)
+      };
+    }
+  }
+
+  async getStats(): Promise<VectorStoreStats> {
+    if (!this.pool) {
+      throw new Error('PostgreSQL not connected');
+    }
+
+    const client = await this.pool.connect();
+    
+    try {
+      // Get namespaces
+      const namespacesResult = await client.query(`
+        SELECT DISTINCT namespace FROM ${this.tableName}
+      `);
+      
+      // Get total vectors
+      const countResult = await client.query(`
+        SELECT COUNT(*) as total FROM ${this.tableName}
+      `);
+      
+      // Get table size
+      const sizeResult = await client.query(`
+        SELECT pg_size_pretty(pg_total_relation_size('${this.tableName}')) as size
+      `);
+      
+      const namespaces = namespacesResult.rows.map(row => row.namespace);
+      const totalVectors = parseInt(countResult.rows[0].total);
+      const dimensions = this.embeddingDimensions || VECTOR_CONSTANTS.DEFAULT_DIMENSIONS;
+      const storageSize = sizeResult.rows[0].size;
+      
+      return {
+        namespaces,
+        totalVectors,
+        dimensions,
+        storageSize
+      };
+    } finally {
+      client.release();
+    }
+  }
+
+  async listNamespaces(): Promise<string[]> {
+    if (!this.pool) {
+      throw new Error('PostgreSQL not connected');
+    }
+
+    const client = await this.pool.connect();
+    
+    try {
+      const result = await client.query(`
+        SELECT DISTINCT namespace, COUNT(*) as count 
+        FROM ${this.tableName} 
+        GROUP BY namespace 
+        ORDER BY namespace
+      `);
+      
+      return result.rows.map(row => `${row.namespace} (${row.count} vectors)`);
+    } finally {
+      client.release();
+    }
+  }
+
+  async searchSimilar(embedding: number[], namespace?: string, limit: number = DEFAULT_CONFIG.QUERY_LIMIT): Promise<VectorSearchResult[]> {
+    if (!this.pool) {
+      throw new Error('PostgreSQL not connected');
+    }
+
+    const client = await this.pool.connect();
+    
+    try {
+      let query = `
+        SELECT id, content, entity, uid, relations, timestamp, chunk_index, total_chunks,
+               1 - (embedding <=> $1) as similarity_score
+        FROM ${this.tableName}
+      `;
+      
+      const params: any[] = [`[${embedding.join(',')}]`];
+      
+      if (namespace) {
+        query += ` WHERE namespace = $2`;
+        params.push(namespace);
+      }
+      
+      query += ` ORDER BY embedding <=> $1 LIMIT $${params.length + 1}`;
+      params.push(limit);
+      
+      const result = await client.query(query, params);
+      
+      return result.rows.map(row => ({
+        id: row.id.toString(),
+        score: parseFloat(row.similarity_score),
+        content: row.content,
+        metadata: {
+          entity: row.entity,
+          uid: row.uid,
+          relations: row.relations,
+          timestamp: row.timestamp,
+          chunkIndex: row.chunk_index,
+          totalChunks: row.total_chunks
+        }
+      }));
     } finally {
       client.release();
     }

@@ -1,12 +1,13 @@
-import { EntityGraph, ContextChunk } from './types';
+import { ContextChunk, EntityGraph } from './types';
+import { DEFAULT_CONFIG } from './constants';
 
 export class ContextBuilder {
   private chunkSize: number;
   private overlap: number;
 
-  constructor(options: { chunkSize?: number; overlap?: number } = {}) {
-    this.chunkSize = options.chunkSize || 1000;
-    this.overlap = options.overlap || 200;
+  constructor(config?: { chunkSize?: number; overlap?: number }) {
+    this.chunkSize = config?.chunkSize || DEFAULT_CONFIG.CHUNK_SIZE;
+    this.overlap = config?.overlap || DEFAULT_CONFIG.CHUNK_OVERLAP;
   }
 
   /**

@@ -1,5 +1,6 @@
 import { Pool, PoolConfig } from 'pg';
-import { DBPlugin, EntitySchema, Field, Relationship, EntityGraph } from '../types';
+import { DBPlugin, EntitySchema, Field, Relationship, EntityGraph, ConnectionTestResult, SampleDataResult, MasterEntityConfig } from '../types';
+import { DEFAULT_CONFIG, DB_CONSTANTS } from '../constants';
 
 export class PostgresPlugin implements DBPlugin {
   public readonly name = 'postgres';
@@ -36,11 +37,11 @@ export class PostgresPlugin implements DBPlugin {
       const tablesQuery = `
         SELECT table_name 
         FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        WHERE table_schema = $1 
         AND table_type = 'BASE TABLE'
       `;
       
-      const tablesResult = await client.query(tablesQuery);
+      const tablesResult = await client.query(tablesQuery, [DB_CONSTANTS.DEFAULT_SCHEMA]);
       const schemas: EntitySchema[] = [];
 
       for (const table of tablesResult.rows) {
@@ -129,9 +130,9 @@ export class PostgresPlugin implements DBPlugin {
         // Check for timestamp fields for time series support
         const timestampFields = fields.filter(f => 
           f.type.includes('timestamp') || 
-          f.name.toLowerCase().includes('created_at') ||
-          f.name.toLowerCase().includes('updated_at') ||
-          f.name.toLowerCase().includes('timestamp')
+          DB_CONSTANTS.TIME_SERIES_FIELDS.some(tsField => 
+            f.name.toLowerCase().includes(tsField.toLowerCase())
+          )
         );
 
         schemas.push({
@@ -218,7 +219,7 @@ export class PostgresPlugin implements DBPlugin {
               const reverseResult = await client.query(reverseQuery, [uid]);
               
               const relatedEntities: EntityGraph[] = [];
-              for (const row of reverseResult.rows.slice(0, 10)) { // Limit to prevent explosion
+              for (const row of reverseResult.rows.slice(0, DEFAULT_CONFIG.RELATIONSHIP_LIMIT)) { // Limit to prevent explosion
                 const relatedEntity = await this.buildEntityGraphRecursive(
                   rel.targetEntity,
                   row.id.toString(),
@@ -259,5 +260,172 @@ export class PostgresPlugin implements DBPlugin {
 
   supportsTimeSeries(): boolean {
     return true; // Postgres can handle time series data
+  }
+
+  async testConnection(): Promise<ConnectionTestResult> {
+    const startTime = Date.now();
+    
+    try {
+      if (!this.pool) {
+        throw new Error('Database not connected');
+      }
+
+      const client = await this.pool.connect();
+      const result = await client.query('SELECT NOW()');
+      client.release();
+      
+      const latency = Date.now() - startTime;
+      
+      return {
+        plugin: this.name,
+        connected: true,
+        latency,
+        details: {
+          serverTime: result.rows[0].now,
+          poolSize: this.pool.totalCount,
+          idleCount: this.pool.idleCount,
+          waitingCount: this.pool.waitingCount
+        }
+      };
+    } catch (error) {
+      return {
+        plugin: this.name,
+        connected: false,
+        error: String(error)
+      };
+    }
+  }
+
+  async getSampleData(entity: string, limit: number = DEFAULT_CONFIG.SAMPLE_LIMIT, filters?: Record<string, any>): Promise<Record<string, any>[]> {
+    if (!this.pool) {
+      throw new Error('Database not connected');
+    }
+
+    const client = await this.pool.connect();
+    
+    try {
+      let whereClause = '';
+      const params: any[] = [limit];
+      
+      if (filters && Object.keys(filters).length > 0) {
+        const conditions: string[] = [];
+        let paramIndex = 2;
+        
+        for (const [key, value] of Object.entries(filters)) {
+          conditions.push(`${key} = $${paramIndex}`);
+          params.push(value);
+          paramIndex++;
+        }
+        
+        whereClause = `WHERE ${conditions.join(' AND ')}`;
+      }
+      
+      const query = `SELECT * FROM ${entity} ${whereClause} LIMIT $1`;
+      const result = await client.query(query, params);
+      
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  }
+
+  async getRelatedSampleData(masterEntity: string, uid: string, config?: MasterEntityConfig): Promise<SampleDataResult> {
+    if (!this.pool) {
+      throw new Error('Database not connected');
+    }
+
+    const client = await this.pool.connect();
+    
+    try {
+      // Get the master entity data
+      const masterQuery = `SELECT * FROM ${masterEntity} WHERE id = $1`;
+      const masterResult = await client.query(masterQuery, [uid]);
+      
+      if (masterResult.rows.length === 0) {
+        throw new Error(`No record found for ${masterEntity} with id ${uid}`);
+      }
+
+      const masterData = masterResult.rows[0];
+      const relatedData: { [entityName: string]: Record<string, any>[] } = {};
+      let totalRecords = 1;
+
+      // Use provided config or introspect schema
+      if (config?.relationships) {
+        for (const [relationName, relationConfig] of Object.entries(config.relationships)) {
+          try {
+            let query: string;
+            let params: any[];
+            
+            if (relationConfig.type === 'one-to-many' || relationConfig.type === 'many-to-many') {
+              // Find records that reference the master entity
+              query = `SELECT * FROM ${relationConfig.entity} WHERE ${relationConfig.foreignKey} = $1 LIMIT $2`;
+              params = [masterData[relationConfig.localKey], DEFAULT_CONFIG.RELATIONSHIP_LIMIT];
+            } else {
+              // Follow foreign key reference
+              const foreignKeyValue = masterData[relationConfig.localKey];
+              if (foreignKeyValue) {
+                query = `SELECT * FROM ${relationConfig.entity} WHERE ${relationConfig.foreignKey} = $1`;
+                params = [foreignKeyValue];
+              } else {
+                continue;
+              }
+            }
+            
+            const result = await client.query(query, params);
+            relatedData[relationName] = result.rows;
+            totalRecords += result.rows.length;
+          } catch (error) {
+            // Skip failed relationships
+            console.warn(`Failed to load relationship ${relationName}: ${error}`);
+          }
+        }
+      } else {
+        // Fallback to schema introspection
+        const schemas = await this.introspectSchema();
+        const entitySchema = schemas.find(s => s.name === masterEntity);
+        
+        if (entitySchema) {
+          for (const rel of entitySchema.relationships.slice(0, 5)) { // Limit relationships
+            try {
+              let query: string;
+              let params: any[];
+              
+              if (rel.type === 'many-to-one') {
+                const foreignKeyValue = masterData[rel.foreignKey];
+                if (foreignKeyValue) {
+                  query = `SELECT * FROM ${rel.targetEntity} WHERE ${rel.referencedKey} = $1`;
+                  params = [foreignKeyValue];
+                } else {
+                  continue;
+                }
+              } else {
+                // Reverse relationship
+                query = `SELECT * FROM ${rel.targetEntity} WHERE ${rel.foreignKey} = $1 LIMIT $2`;
+                params = [uid, DEFAULT_CONFIG.RELATIONSHIP_LIMIT];
+              }
+              
+              const result = await client.query(query, params);
+              if (result.rows.length > 0) {
+                relatedData[rel.targetEntity] = result.rows;
+                totalRecords += result.rows.length;
+              }
+            } catch (error) {
+              // Skip failed relationships
+              console.warn(`Failed to load relationship ${rel.targetEntity}: ${error}`);
+            }
+          }
+        }
+      }
+
+      return {
+        masterEntity,
+        uid,
+        data: masterData,
+        relatedData,
+        totalRecords
+      };
+    } finally {
+      client.release();
+    }
   }
 }

@@ -25,6 +25,58 @@
   },
   "contextBuilder": {
     "chunkSize": 1000,
-    "overlap": 200
+    "overlap": 200,
+    "maxDepth": 3,
+    "relationshipLimit": 10
+  },
+  "masterEntities": [
+    {
+      "name": "users",
+      "primaryKey": "_id",
+      "relationships": {
+        "orders": {
+          "entity": "orders",
+          "type": "one-to-many",
+          "localKey": "_id",
+          "foreignKey": "user_id"
+        },
+        "profiles": {
+          "entity": "user_profiles", 
+          "type": "one-to-one",
+          "localKey": "_id",
+          "foreignKey": "user_id"
+        }
+      },
+      "sampleFilters": {
+        "active": true
+      }
+    },
+    {
+      "name": "orders",
+      "primaryKey": "_id",
+      "relationships": {
+        "user": {
+          "entity": "users",
+          "type": "many-to-one",
+          "localKey": "user_id",
+          "foreignKey": "_id"
+        },
+        "items": {
+          "entity": "order_items",
+          "type": "one-to-many", 
+          "localKey": "_id",
+          "foreignKey": "order_id"
+        }
+      }
+    }
+  ],
+  "systemPrompts": {
+    "default": "You are a helpful assistant working with user and order data. Provide accurate, relevant responses based on the provided context.",
+    "contextBuilder": "Create comprehensive context that captures user relationships, order history, and preferences to enable personalized responses.",
+    "queryProcessor": "Analyze user queries in the context of their order history and profile data. Focus on providing relevant, personalized information.",
+    "custom": {
+      "orderAnalysis": "Focus on order patterns, purchase history, and customer behavior when analyzing data.",
+      "customerSupport": "Provide helpful customer support responses based on user history and order details."
+    }
   }
 }
