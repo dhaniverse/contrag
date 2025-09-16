@@ -1366,6 +1366,7 @@ compatCmd
         printComprehensiveCompatibility(result);
       }
       
+      process.exit(0);
     } catch (error) {
       console.error(chalk.red('Compatibility test failed:'), error);
       process.exit(1);
@@ -1388,7 +1389,7 @@ compatCmd
       
       if (dimensionTest.compatible) {
         console.log(chalk.green('✓ Dimensions already compatible!'));
-        return;
+        process.exit(0);
       }
       
       if (!dimensionTest.autoFixAvailable) {
@@ -1397,7 +1398,7 @@ compatCmd
         dimensionTest.recommendations.forEach(rec => {
           console.log(`  • ${rec}`);
         });
-        return;
+        process.exit(0);
       }
       
       console.log(chalk.blue('Attempting to fix dimensions...'));
@@ -1417,6 +1418,7 @@ compatCmd
         console.log(chalk.red(`✗ ${fixResult.message}`));
       }
       
+      process.exit(0);
     } catch (error) {
       console.error(chalk.red('Dimension fix failed:'), error);
       process.exit(1);
@@ -1444,6 +1446,7 @@ compatCmd
         });
       }
       
+      process.exit(0);
     } catch (error) {
       console.error(chalk.red('Configuration validation failed:'), error);
       process.exit(1);
