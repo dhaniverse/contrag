@@ -12,9 +12,13 @@ import {
   ConnectionTestResult,
   SampleDataResult,
   VectorStoreStats,
-  VectorSearchResult
+  VectorSearchResult,
+  CompatibilityTestResult,
+  DimensionCompatibilityResult,
+  ComprehensiveCompatibilityResult
 } from './types';
 import { ContextBuilder } from './context-builder';
+import { CompatibilityTester } from './compatibility';
 import { PostgresPlugin } from './plugins/postgres';
 import { MongoPlugin } from './plugins/mongodb';
 import { OpenAIEmbedderPlugin } from './plugins/openai-embedder';
@@ -493,6 +497,84 @@ export class ContragSDK {
   }
 
   /**
+   * Test comprehensive system compatibility
+   */
+  async testCompatibility(): Promise<ComprehensiveCompatibilityResult> {
+    const tester = new CompatibilityTester(
+      this.dbPlugin || undefined,
+      this.vectorStorePlugin || undefined,
+      this.embedderPlugin || undefined,
+      this.config || undefined
+    );
+    return await tester.runComprehensiveTest();
+  }
+
+  /**
+   * Test database compatibility
+   */
+  async testDatabaseCompatibility(): Promise<CompatibilityTestResult> {
+    const tester = new CompatibilityTester(
+      this.dbPlugin || undefined,
+      undefined,
+      undefined,
+      this.config || undefined
+    );
+    return await tester.testDatabaseCompatibility();
+  }
+
+  /**
+   * Test vector store compatibility
+   */
+  async testVectorStoreCompatibility(): Promise<CompatibilityTestResult> {
+    const tester = new CompatibilityTester(
+      undefined,
+      this.vectorStorePlugin || undefined,
+      undefined,
+      this.config || undefined
+    );
+    return await tester.testVectorStoreCompatibility();
+  }
+
+  /**
+   * Test embedder compatibility
+   */
+  async testEmbedderCompatibility(): Promise<CompatibilityTestResult> {
+    const tester = new CompatibilityTester(
+      undefined,
+      undefined,
+      this.embedderPlugin || undefined,
+      this.config || undefined
+    );
+    return await tester.testEmbedderCompatibility();
+  }
+
+  /**
+   * Test dimension compatibility between embedder and vector store
+   */
+  async testDimensionCompatibility(): Promise<DimensionCompatibilityResult> {
+    const tester = new CompatibilityTester(
+      undefined,
+      this.vectorStorePlugin || undefined,
+      this.embedderPlugin || undefined,
+      this.config || undefined
+    );
+    return await tester.testDimensionCompatibility();
+  }
+
+  /**
+   * Automatically fix dimension mismatches
+   */
+  async fixDimensions(): Promise<{ success: boolean; message: string }> {
+    const tester = new CompatibilityTester(
+      undefined,
+      this.vectorStorePlugin || undefined,
+      this.embedderPlugin || undefined,
+      this.config || undefined
+    );
+    return await tester.fixDimensions();
+  }
+
+  /**
    * Get current configuration
    */
   getConfig(): ContragConfig | null {
@@ -503,6 +585,7 @@ export class ContragSDK {
 // Export the main class and types
 export * from './types';
 export { ContextBuilder } from './context-builder';
+export { CompatibilityTester } from './compatibility';
 
 // Export plugins
 export { PostgresPlugin } from './plugins/postgres';

@@ -84,6 +84,12 @@ export interface VectorStorePlugin {
   getStats?(): Promise<VectorStoreStats>;
   testConnection?(): Promise<ConnectionTestResult>;
   searchSimilar?(embedding: number[], namespace?: string, limit?: number): Promise<VectorSearchResult[]>;
+  // Dimension compatibility methods
+  getCurrentDimensions?(): Promise<number | null>;
+  setDimensions?(dimensions: number): Promise<void>;
+  supportsDimensionMigration?(): boolean;
+  migrateDimensions?(fromDimensions: number, toDimensions: number): Promise<void>;
+  validateDimensions?(dimensions: number): Promise<boolean>;
 }
 
 // Embedder plugin interface
@@ -95,6 +101,10 @@ export interface EmbedderPlugin {
   // Enhanced debugging methods
   testConnection?(): Promise<ConnectionTestResult>;
   generateWithPrompt?(text: string, systemPrompt: string): Promise<string>;
+  // Dimension compatibility methods
+  getModelDimensions?(): Promise<number>;
+  supportsCustomDimensions?(): boolean;
+  validateModel?(model: string): Promise<boolean>;
 }
 
 // Master entity configuration
@@ -129,11 +139,18 @@ export interface ContragConfig {
   };
   vectorStore: {
     plugin: string;
-    config: Record<string, any>;
+    config: Record<string, any> & {
+      dimensions?: number;
+      autoDetectDimensions?: boolean;
+      forceDimensionAlignment?: boolean;
+    };
   };
   embedder: {
     plugin: string;
-    config: Record<string, any>;
+    config: Record<string, any> & {
+      dimensions?: number;
+      model?: string;
+    };
   };
   contextBuilder?: {
     chunkSize?: number;
@@ -143,6 +160,11 @@ export interface ContragConfig {
   };
   masterEntities?: MasterEntityConfig[];
   systemPrompts?: SystemPromptConfig;
+  compatibility?: {
+    validateDimensions?: boolean;
+    autoFixDimensions?: boolean;
+    strictMode?: boolean;
+  };
 }
 
 // SDK response types
@@ -193,4 +215,45 @@ export interface VectorSearchResult {
   score: number;
   metadata: Record<string, any>;
   content?: string;
+}
+
+// Compatibility testing types
+export interface DimensionCompatibilityResult {
+  embedderDimensions: number;
+  vectorStoreDimensions: number;
+  compatible: boolean;
+  autoFixAvailable: boolean;
+  recommendations: string[];
+}
+
+export interface CompatibilityTestResult {
+  component: string;
+  compatible: boolean;
+  issues: CompatibilityIssue[];
+  recommendations: string[];
+  fixable: boolean;
+}
+
+export interface CompatibilityIssue {
+  type: 'dimension_mismatch' | 'version_incompatible' | 'config_invalid' | 'resource_unavailable';
+  severity: 'error' | 'warning' | 'info';
+  message: string;
+  expected?: any;
+  actual?: any;
+  fixSuggestion?: string;
+}
+
+export interface ComprehensiveCompatibilityResult {
+  overall: boolean;
+  components: {
+    database: CompatibilityTestResult;
+    vectorStore: CompatibilityTestResult;
+    embedder: CompatibilityTestResult;
+    dimensions: DimensionCompatibilityResult;
+  };
+  summary: {
+    totalIssues: number;
+    fixableIssues: number;
+    criticalIssues: number;
+  };
 }

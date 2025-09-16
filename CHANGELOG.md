@@ -5,7 +5,58 @@ All notable changes to ContRAG will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2025-09-15
+# Changelog
+
+## [1.2.0] - 2024-12-19
+
+### Added
+- **Comprehensive Compatibility Testing System**
+  - New `CompatibilityTester` class for systematic testing of system components
+  - Dimension compatibility validation and automatic fixing
+  - Database, vector store, and embedder connectivity testing
+  - Configuration schema validation
+  
+- **Enhanced CLI Commands**
+  - `contrag compatibility test` - Run comprehensive compatibility tests
+  - `contrag compat test --database-only|--vector-store-only|--embedder-only|--dimensions-only` - Component-specific tests
+  - `contrag compat fix-dimensions` - Automatically fix dimension mismatches
+  - `contrag compat validate-config` - Validate configuration schema
+  
+- **Smart Dimension Management**
+  - Automatic detection of dimension mismatches between embedders and vector stores
+  - Auto-fix capabilities for dimension alignment
+  - Migration support for existing vector data
+  - Prevention of dimension-related pipeline failures
+  
+- **Enhanced Plugin Interfaces**
+  - Added dimension management methods to vector store plugins
+  - Model validation methods for embedder plugins  
+  - Connection testing methods for all plugin types
+  - Support for dimension migration and compatibility checking
+
+- **SDK Integration**
+  - New SDK methods: `testCompatibility()`, `testDatabaseCompatibility()`, `testVectorStoreCompatibility()`, `testEmbedderCompatibility()`, `testDimensionCompatibility()`, `fixDimensions()`
+  - Comprehensive compatibility result types with detailed issue reporting
+  - Auto-fix availability detection and execution
+
+### Enhanced
+- **Error Handling**
+  - Improved error messages with actionable fix suggestions
+  - Severity-based issue classification (error, warning, info)
+  - Detailed compatibility reports with recommendations
+  
+- **Documentation**
+  - New comprehensive compatibility testing guide
+  - Updated README with new CLI commands
+  - Enhanced plugin documentation with dimension management
+
+### Fixed
+- **Edge Cases**
+  - Better handling of dimension mismatches in production setups
+  - Improved error recovery for connection failures
+  - Enhanced validation for cloud service configurations
+
+## [1.1.0] - 2024-12-19
 
 ### 🚀 Major Features Added
 

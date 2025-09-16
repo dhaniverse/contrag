@@ -11,6 +11,7 @@ ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) 
 - **🎯 Master Entity Configuration** - Define entity relationships via config
 - **🤖 System Prompt Support** - Customize LLM behavior for different use cases  
 - **🔧 Comprehensive CLI Debugging** - Test connections, analyze data, manage vectors
+- **⚙️ Smart Compatibility Testing** - Detect and auto-fix dimension mismatches, connection issues
 - **📊 Advanced Analytics** - Vector store stats, similarity search, health monitoring
 - **⚡ Production Ready** - Batch processing, monitoring, error handling
 
@@ -20,6 +21,11 @@ ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) 
 contrag config init --template mongodb
 contrag config validate
 contrag test all
+
+# Compatibility & Dimension Management
+contrag compat test
+contrag compat fix-dimensions
+contrag compat validate-config
 
 # Data Analysis & Debugging
 contrag sample --entity User --uid 123
@@ -148,6 +154,7 @@ const sampleData = await sdk.getRelatedSampleData('users', '123');
 ```bash
 contrag config init [--template] [--force]    # Initialize configuration
 contrag config validate                       # Validate and test connections
+contrag config view                           # View current configuration
 ```
 
 ### Connection Testing
@@ -158,10 +165,22 @@ contrag test vector                          # Test vector store only
 contrag test embedder                        # Test embedder only
 ```
 
+### Compatibility Testing
+```bash
+contrag compatibility test                    # Run comprehensive compatibility tests
+contrag compat test --database-only          # Test database compatibility only
+contrag compat test --vector-store-only      # Test vector store compatibility only
+contrag compat test --embedder-only          # Test embedder compatibility only
+contrag compat test --dimensions-only        # Test dimension compatibility only
+contrag compat fix-dimensions                # Auto-fix dimension mismatches
+contrag compat validate-config               # Validate configuration schema
+```
+
 ### Schema Analysis
 ```bash
 contrag introspect [--format json]          # Analyze database schema
 contrag sample --entity User [--uid 123]    # Get sample data
+contrag sample unified --master-entity users # Get unified sample data
 ```
 
 ### Vector Store Management
@@ -169,6 +188,7 @@ contrag sample --entity User [--uid 123]    # Get sample data
 contrag vector stats                         # Show statistics
 contrag vector namespaces                    # List namespaces
 contrag vector search --text "query"        # Search vectors
+contrag vector clear                         # Clear all vectors
 ```
 
 ### Context Building & Querying

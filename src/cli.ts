@@ -1328,4 +1328,278 @@ System Prompts:
   - custom: User-defined prompts for specific use cases
 `);
 
+// Add compatibility command group
+const compatCmd = program
+  .command('compatibility')
+  .alias('compat')
+  .description('Test and fix system compatibility');
+
+compatCmd
+  .command('test')
+  .description('Run comprehensive compatibility tests')
+  .option('-c, --config <config>', 'Configuration file path', 'contrag.config.json')
+  .option('--database-only', 'Test database compatibility only')
+  .option('--vector-store-only', 'Test vector store compatibility only')  
+  .option('--embedder-only', 'Test embedder compatibility only')
+  .option('--dimensions-only', 'Test dimension compatibility only')
+  .action(async (options) => {
+    try {
+      const config = loadConfig();
+      const sdk = new ContragSDK(config);
+      
+      console.log(chalk.blue('Running compatibility tests...\n'));
+      
+      if (options.databaseOnly) {
+        const result = await sdk.testDatabaseCompatibility();
+        printCompatibilityResult('Database', result);
+      } else if (options.vectorStoreOnly) {
+        const result = await sdk.testVectorStoreCompatibility();
+        printCompatibilityResult('Vector Store', result);
+      } else if (options.embedderOnly) {
+        const result = await sdk.testEmbedderCompatibility();
+        printCompatibilityResult('Embedder', result);
+      } else if (options.dimensionsOnly) {
+        const result = await sdk.testDimensionCompatibility();
+        printDimensionCompatibility(result);
+      } else {
+        const result = await sdk.testCompatibility();
+        printComprehensiveCompatibility(result);
+      }
+      
+    } catch (error) {
+      console.error(chalk.red('Compatibility test failed:'), error);
+      process.exit(1);
+    }
+  });
+
+compatCmd
+  .command('fix-dimensions')
+  .description('Automatically fix dimension mismatches')
+  .option('-c, --config <config>', 'Configuration file path', 'contrag.config.json')
+  .action(async (options) => {
+    try {
+      const config = loadConfig();
+      const sdk = new ContragSDK(config);
+      
+      console.log(chalk.blue('Checking dimension compatibility...\n'));
+      
+      const dimensionTest = await sdk.testDimensionCompatibility();
+      printDimensionCompatibility(dimensionTest);
+      
+      if (dimensionTest.compatible) {
+        console.log(chalk.green('✓ Dimensions already compatible!'));
+        return;
+      }
+      
+      if (!dimensionTest.autoFixAvailable) {
+        console.log(chalk.yellow('⚠ Auto-fix not available. Please manually configure dimensions.'));
+        console.log('Recommendations:');
+        dimensionTest.recommendations.forEach(rec => {
+          console.log(`  • ${rec}`);
+        });
+        return;
+      }
+      
+      console.log(chalk.blue('Attempting to fix dimensions...'));
+      const fixResult = await sdk.fixDimensions();
+      
+      if (fixResult.success) {
+        console.log(chalk.green(`✓ ${fixResult.message}`));
+        
+        // Verify fix
+        const verifyTest = await sdk.testDimensionCompatibility();
+        if (verifyTest.compatible) {
+          console.log(chalk.green('✓ Dimension fix verified successfully!'));
+        } else {
+          console.log(chalk.yellow('⚠ Fix applied but verification failed. Please check manually.'));
+        }
+      } else {
+        console.log(chalk.red(`✗ ${fixResult.message}`));
+      }
+      
+    } catch (error) {
+      console.error(chalk.red('Dimension fix failed:'), error);
+      process.exit(1);
+    }
+  });
+
+compatCmd
+  .command('validate-config')
+  .description('Validate configuration for common issues')
+  .option('-c, --config <config>', 'Configuration file path', 'contrag.config.json')
+  .action(async (options) => {
+    try {
+      const config = loadConfig();
+      
+      console.log(chalk.blue('Validating configuration...\n'));
+      
+      const issues = validateConfigurationSchema(config);
+      
+      if (issues.length === 0) {
+        console.log(chalk.green('✓ Configuration is valid!'));
+      } else {
+        console.log(chalk.yellow(`Found ${issues.length} configuration issue(s):\n`));
+        issues.forEach((issue, index) => {
+          console.log(`${index + 1}. ${chalk.yellow(issue)}`);
+        });
+      }
+      
+    } catch (error) {
+      console.error(chalk.red('Configuration validation failed:'), error);
+      process.exit(1);
+    }
+  });
+
+// Helper functions for printing compatibility results
+function printCompatibilityResult(component: string, result: any) {
+  const status = result.compatible ? 
+    chalk.green('✓ COMPATIBLE') : 
+    chalk.red('✗ INCOMPATIBLE');
+    
+  console.log(`${component}: ${status}\n`);
+  
+  if (result.issues && result.issues.length > 0) {
+    console.log('Issues:');
+    result.issues.forEach((issue: any, index: number) => {
+      const severity = issue.severity === 'error' ? 
+        chalk.red('ERROR') : 
+        chalk.yellow('WARNING');
+      console.log(`  ${index + 1}. [${severity}] ${issue.message}`);
+      if (issue.expected !== undefined && issue.actual !== undefined) {
+        console.log(`     Expected: ${issue.expected}, Actual: ${issue.actual}`);
+      }
+      if (issue.fixSuggestion) {
+        console.log(`     Fix: ${issue.fixSuggestion}`);
+      }
+    });
+    console.log();
+  }
+  
+  if (result.recommendations && result.recommendations.length > 0) {
+    console.log('Recommendations:');
+    result.recommendations.forEach((rec: string) => {
+      console.log(`  • ${rec}`);
+    });
+    console.log();
+  }
+}
+
+function printDimensionCompatibility(result: any) {
+  const status = result.compatible ? 
+    chalk.green('✓ COMPATIBLE') : 
+    chalk.red('✗ INCOMPATIBLE');
+    
+  console.log(`Dimension Compatibility: ${status}\n`);
+  console.log(`Embedder dimensions: ${result.embedderDimensions}`);
+  console.log(`Vector store dimensions: ${result.vectorStoreDimensions}`);
+  
+  if (result.autoFixAvailable) {
+    console.log(chalk.blue('Auto-fix available: Yes'));
+  } else {
+    console.log(chalk.gray('Auto-fix available: No'));
+  }
+  
+  if (result.recommendations && result.recommendations.length > 0) {
+    console.log('\nRecommendations:');
+    result.recommendations.forEach((rec: string) => {
+      console.log(`  • ${rec}`);
+    });
+  }
+  console.log();
+}
+
+function printComprehensiveCompatibility(result: any) {
+  const status = result.overall ? 
+    chalk.green('✓ SYSTEM COMPATIBLE') : 
+    chalk.red('✗ SYSTEM INCOMPATIBLE');
+    
+  console.log(`${status}\n`);
+  
+  // Component status
+  console.log('Components:');
+  Object.entries(result.components).forEach(([name, comp]: [string, any]) => {
+    const componentStatus = comp.compatible ? 
+      chalk.green('✓') : 
+      chalk.red('✗');
+    console.log(`  ${componentStatus} ${name.charAt(0).toUpperCase() + name.slice(1)}`);
+  });
+  
+  console.log(`\nSummary:`);
+  console.log(`  Total issues: ${result.summary.totalIssues}`);
+  console.log(`  Critical issues: ${result.summary.criticalIssues}`);
+  console.log(`  Fixable issues: ${result.summary.fixableIssues}`);
+  
+  // Detailed results
+  console.log('\n' + '='.repeat(60));
+  
+  if (!result.components.database.compatible) {
+    printCompatibilityResult('Database', result.components.database);
+  }
+  
+  if (!result.components.vectorStore.compatible) {
+    printCompatibilityResult('Vector Store', result.components.vectorStore);
+  }
+  
+  if (!result.components.embedder.compatible) {
+    printCompatibilityResult('Embedder', result.components.embedder);
+  }
+  
+  if (!result.components.dimensions.compatible) {
+    printDimensionCompatibility(result.components.dimensions);
+  }
+}
+
+function validateConfigurationSchema(config: any): string[] {
+  const issues: string[] = [];
+  
+  // Check required sections
+  if (!config.database) {
+    issues.push('Missing database configuration');
+  }
+  if (!config.vectorStore) {
+    issues.push('Missing vector store configuration');
+  }
+  if (!config.embedder) {
+    issues.push('Missing embedder configuration');
+  }
+  
+  // Check dimension consistency
+  const embedderDims = config.embedder?.config?.dimensions;
+  const vectorStoreDims = config.vectorStore?.config?.dimensions;
+  
+  if (embedderDims && vectorStoreDims && embedderDims !== vectorStoreDims) {
+    issues.push(`Dimension mismatch: embedder (${embedderDims}) vs vector store (${vectorStoreDims})`);
+  }
+  
+  // Check connection parameters
+  if (config.database?.config) {
+    const dbConfig = config.database.config;
+    if (!dbConfig.host && !dbConfig.uri && !dbConfig.connectionString) {
+      issues.push('Database missing connection parameters (host/uri/connectionString)');
+    }
+  }
+  
+  if (config.vectorStore?.config) {
+    const vsConfig = config.vectorStore.config;
+    if (!vsConfig.url && !vsConfig.host) {
+      issues.push('Vector store missing connection parameters (url/host)');
+    }
+  }
+  
+  // Check API keys for cloud services
+  if (config.embedder?.plugin === 'openai' && !config.embedder?.config?.apiKey) {
+    issues.push('OpenAI embedder missing API key');
+  }
+  
+  if (config.embedder?.plugin === 'gemini' && !config.embedder?.config?.apiKey) {
+    issues.push('Gemini embedder missing API key');
+  }
+  
+  if (config.vectorStore?.plugin === 'weaviate' && config.vectorStore?.config?.url?.includes('weaviate.io') && !config.vectorStore?.config?.apiKey) {
+    issues.push('Weaviate cloud instance missing API key');
+  }
+  
+  return issues;
+}
+
 program.parse(process.argv);
