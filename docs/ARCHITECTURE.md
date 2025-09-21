@@ -1,52 +1,95 @@
-# Contrag Architecture Documentation
+# ContRAG Architecture Documentation v1.3.0
 
 ## Overview
 
-Contrag is a sophisticated Retrieval-Augmented Generation (RAG) system designed to intelligently extract, process, and query complex database schemas. This document provides a comprehensive overview of the system architecture, design decisions, and implementation details.
+ContRAG v1.3.0 is a sophisticated Retrieval-Augmented Generation (RAG) system with revolutionary **Intelligent Preference Tracking** capabilities. The system intelligently extracts, processes, and queries complex database schemas while automatically learning user preferences from natural conversation. This document provides comprehensive High-Level Design (HLD) and Low-Level Design (LLD) documentation.
 
 ## Table of Contents
 
 1. [System Architecture](#system-architecture)
-2. [Core Components](#core-components)
-3. [Data Flow](#data-flow)
-4. [Plugin Architecture](#plugin-architecture)
-5. [Entity Relationship Engine](#entity-relationship-engine)
-6. [Vector Storage & Retrieval](#vector-storage--retrieval)
-7. [Context Building Strategy](#context-building-strategy)
-8. [Performance Optimizations](#performance-optimizations)
-9. [Security Architecture](#security-architecture)
-10. [Scalability Considerations](#scalability-considerations)
-11. [Integration Patterns](#integration-patterns)
-12. [Implementation Details](#implementation-details)
+2. [NEW: Preference System Architecture](#preference-system-architecture) 
+3. [Core Components](#core-components)
+4. [Data Flow](#data-flow)
+5. [Plugin Architecture](#plugin-architecture)
+6. [Entity Relationship Engine](#entity-relationship-engine)
+7. [Vector Storage & Retrieval](#vector-storage--retrieval)
+8. [Context Building Strategy](#context-building-strategy)
+9. [Performance Optimizations](#performance-optimizations)
+10. [Security Architecture](#security-architecture)
+11. [Scalability Considerations](#scalability-considerations)
+12. [Integration Patterns](#integration-patterns)
+13. [Implementation Details](#implementation-details)
 
 ## System Architecture
 
-### High-Level Architecture
+### High-Level Architecture v1.3.0
 
 ```mermaid
 graph TB
-    Client[Client Application] --> SDK[Contrag SDK]
-    SDK --> DBPlugin[Database Plugin]
-    SDK --> VectorPlugin[Vector Store Plugin]
-    SDK --> EmbedPlugin[Embedder Plugin]
-    SDK --> ContextEngine[Context Engine]
+    subgraph "User Interface Layer"
+        A[User Query]
+        B[CLI Commands] 
+        C[SDK API Calls]
+    end
     
-    DBPlugin --> MongoDB[(MongoDB)]
-    DBPlugin --> PostgreSQL[(PostgreSQL)]
-    DBPlugin --> MySQL[(MySQL)]
+    subgraph "ContRAG Core Engine"
+        D[Query Processor]
+        E[Configuration Manager]
+        F[Plugin Registry]
+    end
     
-    VectorPlugin --> pgvector[(pgvector)]
-    VectorPlugin --> Weaviate[(Weaviate)]
-    VectorPlugin --> Pinecone[(Pinecone)]
+    subgraph "🔥 NEW: Preference System"
+        G[Preference Extraction Engine]
+        H[LLM Preference Analyzer]
+        I[Preference Storage Manager]
+        J[User Profile Builder]
+    end
     
-    EmbedPlugin --> OpenAI[OpenAI API]
-    EmbedPlugin --> Gemini[Gemini API]
-    EmbedPlugin --> Hugging[Hugging Face]
+    subgraph "RAG System"
+        K[Schema Introspector]
+        L[Entity Graph Builder]
+        M[Context Generator]
+        N[Vector Engine]
+    end
     
-    ContextEngine --> SchemaIntrospector[Schema Introspector]
-    ContextEngine --> RelationshipMapper[Relationship Mapper]
-    ContextEngine --> ChunkGenerator[Chunk Generator]
-    ContextEngine --> EmbeddingEngine[Embedding Engine]
+    subgraph "Data Storage Layer"
+        O[(Primary Database)]
+        P[(Vector Store)]
+        Q[(🔥 Preference Store)]
+    end
+    
+    subgraph "AI/ML Services"
+        R[Embedding Service]
+        S[LLM Services]
+    end
+    
+    A --> D
+    B --> D  
+    C --> D
+    D --> E
+    D --> F
+    D --> G
+    D --> K
+    
+    G --> H
+    H --> I
+    I --> Q
+    I --> J
+    J --> M
+    
+    K --> O
+    L --> O
+    M --> N
+    N --> P
+    N --> R
+    
+    H --> S
+    
+    style G fill:#ff9999,stroke:#333,stroke-width:3px
+    style H fill:#ff9999,stroke:#333,stroke-width:3px
+    style I fill:#ff9999,stroke:#333,stroke-width:3px
+    style J fill:#ff9999,stroke:#333,stroke-width:3px
+    style Q fill:#ff9999,stroke:#333,stroke-width:3px
 ```
 
 ### Component Interaction Flow
@@ -74,6 +117,91 @@ sequenceDiagram
     SDK->>VS: storeEmbeddings(namespace, chunks, embeddings)
     VS->>SDK: return success
     SDK->>App: return buildResult
+```
+
+## 🔥 NEW: Preference System Architecture
+
+### Preference Extraction Data Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant QP as Query Processor
+    participant PE as Preference Engine
+    participant LLM as LLM Analyzer
+    participant PS as Preference Store
+    participant UPB as User Profile Builder
+    participant RAG as RAG Engine
+    participant VS as Vector Store
+    participant DB as Database
+    
+    U->>QP: Query with preferenceTracking=true
+    Note over QP: "I like large cap tech stocks like Apple"
+    
+    par Preference Extraction
+        QP->>PE: Extract preferences from query
+        PE->>LLM: Analyze query for preferences
+        Note over LLM: "Extract: category=stocks, type=market_cap, values=[large cap]"
+        LLM-->>PE: Structured preference data
+        PE->>PS: Store preferences linked to userId
+        PS->>UPB: Trigger profile update
+    and RAG Processing
+        QP->>RAG: Build context with user preferences
+        RAG->>DB: Fetch entity relationships
+        RAG->>VS: Search vectors with preference context
+        VS-->>RAG: Relevant context chunks
+    end
+    
+    UPB-->>QP: Updated user profile
+    RAG-->>QP: Enhanced context + preferences
+    QP-->>U: Response with context and extracted preferences
+```
+
+### Preference Data Architecture
+
+```mermaid
+erDiagram
+    USER_PREFERENCES {
+        string id PK
+        string user_id FK
+        string category
+        string type
+        json values
+        json examples
+        float confidence
+        timestamp created_at
+        timestamp updated_at
+        boolean active
+    }
+    
+    USER_PROFILES {
+        string user_id PK
+        json preference_summary
+        timestamp last_updated
+        integer interaction_count
+        json metadata
+    }
+    
+    PREFERENCE_HISTORY {
+        string id PK
+        string user_id FK
+        string preference_id FK
+        string action
+        json old_values
+        json new_values
+        timestamp timestamp
+    }
+    
+    PREFERENCE_CATEGORIES {
+        string category PK
+        string description
+        json schema
+        boolean active
+    }
+    
+    USER_PREFERENCES ||--o{ PREFERENCE_HISTORY : "tracks changes"
+    USER_PROFILES ||--o{ USER_PREFERENCES : "contains"
+    PREFERENCE_CATEGORIES ||--o{ USER_PREFERENCES : "categorizes"
 ```
 
 ## Core Components

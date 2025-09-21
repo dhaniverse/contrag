@@ -1,9 +1,10 @@
-# ContRAG Enhanced Features Guide
+# ContRAG Enhanced Features Guide v1.3.0
 
-This document covers the enhanced debugging, configuration, and management features added to ContRAG.
+This document covers all enhanced features in ContRAG, including the revolutionary **Intelligent Preference Tracking** system introduced in v1.3.0.
 
 ## Table of Contents
 
+- [🧠 Intelligent Preference Tracking (NEW)](#intelligent-preference-tracking-new)
 - [Configuration Management](#configuration-management)
 - [Master Entity Configuration](#master-entity-configuration)
 - [System Prompts](#system-prompts)
@@ -12,6 +13,175 @@ This document covers the enhanced debugging, configuration, and management featu
 - [Vector Store Debugging](#vector-store-debugging)
 - [CLI Commands Reference](#cli-commands-reference)
 - [Environment Variables](#environment-variables)
+- [Privacy & Security](#privacy--security)
+- [Performance Optimization](#performance-optimization)
+
+## 🧠 Intelligent Preference Tracking (NEW)
+
+### Overview
+
+ContRAG v1.3.0 introduces **Intelligent Preference Tracking** that automatically extracts user preferences from natural conversation and builds dynamic user profiles to enhance personalization.
+
+### Key Features
+
+- **🤖 AI-Powered Extraction** - Uses advanced LLMs to understand preferences in context
+- **📊 Structured Storage** - Organizes preferences by category, type, and confidence
+- **🔄 Dynamic Profiles** - User profiles evolve based on interactions  
+- **🎯 Context Enhancement** - RAG responses incorporate user preferences
+- **🔒 Privacy First** - Configurable anonymization and retention policies
+
+### Basic Usage
+
+#### Enable Preference Tracking
+```javascript
+const response = await contrag.query({
+  userId: 'user123',
+  query: 'I like large cap stocks and dividend-paying companies',
+  masterEntity: 'User'
+}, { 
+  preferenceTracking: true,
+  storePreferences: true 
+});
+
+// Access extracted preferences
+console.log('Extracted preferences:', response.preferences);
+console.log('Enhanced context:', response.context);
+```
+
+#### Example Preference Extraction
+```
+User Query: "I prefer sustainable investments and avoid high-risk stocks"
+
+Extracted Preferences:
+{
+  "userId": "user123",
+  "preferences": [
+    {
+      "category": "investment_style",
+      "type": "values", 
+      "values": ["sustainable", "ESG"],
+      "confidence": 0.92
+    },
+    {
+      "category": "risk_tolerance",
+      "type": "level",
+      "values": ["low", "conservative"], 
+      "confidence": 0.87
+    }
+  ]
+}
+```
+
+### Configuration
+
+#### Basic Preference Configuration
+```json
+{
+  "preferences": {
+    "enabled": true,
+    "extractionModel": "gpt-4",
+    "confidenceThreshold": 0.7,
+    "storage": {
+      "table": "user_preferences",
+      "retentionDays": 365
+    }
+  }
+}
+```
+
+#### Advanced Configuration
+```json
+{
+  "preferences": {
+    "enabled": true,
+    "extractionModel": "gpt-4",
+    "confidenceThreshold": 0.7,
+    
+    "extraction": {
+      "categories": [
+        "financial_instruments",
+        "risk_tolerance", 
+        "investment_timeline",
+        "sectors",
+        "company_size",
+        "investment_values"
+      ],
+      "batchSize": 10,
+      "asyncProcessing": true,
+      "cacheTimeout": "24h"
+    },
+    
+    "privacy": {
+      "anonymize": true,
+      "encryptionKey": "your-encryption-key",
+      "requireConsent": true,
+      "retentionDays": 90
+    },
+    
+    "analytics": {
+      "enabled": true,
+      "retentionDays": 180,
+      "aggregationLevel": "user"
+    }
+  }
+}
+```
+
+### SDK Methods
+
+#### Preference Management
+```typescript
+// Get user preferences
+const preferences = await contrag.getUserPreferences('user123');
+
+// Update preferences manually
+await contrag.updateUserPreferences('user123', [
+  {
+    category: 'risk_tolerance',
+    type: 'level',
+    values: ['moderate'],
+    confidence: 0.95
+  }
+]);
+
+// Clear old preferences
+await contrag.clearUserPreferences('user123', { 
+  olderThan: '30d',
+  categories: ['outdated_category']
+});
+
+// Analyze preference patterns
+const analytics = await contrag.analyzePreferences('user123');
+```
+
+### CLI Commands for Preferences
+
+#### View and Manage Preferences
+```bash
+# Display user preferences
+contrag preferences show --user-id user123
+
+# Export preferences to JSON
+contrag preferences export --user-id user123 --format json
+
+# Clear old preferences
+contrag preferences clear --user-id user123 --older-than 30d
+
+# Test preference extraction
+contrag preferences analyze --query "I like sustainable tech companies"
+```
+
+#### Analytics Commands
+```bash
+# Preference analytics dashboard
+contrag analytics preferences
+
+# User preference trends
+contrag analytics trends --user-id user123 --timeframe 30d
+
+# Global category distribution
+contrag analytics categories --global --timeframe 7d
+```
 
 ## Configuration Management
 

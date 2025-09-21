@@ -3,11 +3,39 @@
 [![npm version](https://badge.fury.io/js/contrag.svg)](https://badge.fury.io/js/contrag)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) systems that automatically introspect your existing database schema, build comprehensive entity relationship graphs, and create intelligent vector stores for personalized context retrieval.
+ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) systems that automatically introspect your existing database schema, build comprehensive entity relationship graphs, and create i# Build personalized vector store
+const result = await ctx.buildFor("User", "user_123");
 
-## 🚀 What's New in v1.1
+// Query with preference tracking (NEW in v1.3)  
+const queryResult = await ctx.query({
+  userId: "user_123",
+  query: "I p- **Customer Support**: Build context about customer interactions, orders, and support tickets with personalized preferences
+- **E-commerce**: Generate personalized product recommendations based on user behavior and stated preferences
+- **Financial Services**: Create investment recommendations based on user risk tolerance and stated preferences
+- **Healthcare**: Build patient-centric views combining medical records, appointments, treatments, and care preferences
+- **Finance**: Build comprehensive user profiles including transactions, accounts, interactions, and investment preferencesr sustainable investments. What should I invest in?", 
+  masterEntity: "User"
+}, { preferenceTracking: true });
 
-### Major Features
+// Access both context and extracted preferences
+console.log('Context chunks:', queryResult.chunks);
+console.log('Extracted preferences:', queryResult.preferences);
+
+// Use the retrieved context with your LLM
+for (const chunk of queryResult.chunks) {
+  console.log(chunk.content);
+} vector stores for personalized context retrieval.
+
+## 🚀 What's New in v1.3
+
+### 🧠 Intelligent Preference Tracking (NEW)
+- **AI-Powered Preference Extraction** - Automatically identify user preferences from natural conversation
+- **Smart User Profiling** - Build dynamic user profiles that evolve with interactions
+- **Seamless Integration** - Optional preference tracking with simple API flag
+- **Multi-Domain Support** - Works across finance, e-commerce, content, and custom domains
+- **Privacy-First Design** - Configurable data retention and anonymization options
+
+### Enhanced Features from v1.1
 - **🎯 Master Entity Configuration** - Define entity relationships via config
 - **🤖 System Prompt Support** - Customize LLM behavior for different use cases  
 - **🔧 Comprehensive CLI Debugging** - Test connections, analyze data, manage vectors
@@ -21,6 +49,12 @@ ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) 
 contrag config init --template mongodb
 contrag config validate
 contrag test all
+
+# Preference Management (NEW in v1.3)
+contrag preferences show --user-id user123
+contrag preferences export --user-id user123 --format json
+contrag preferences clear --user-id user123 --older-than 30d
+contrag preferences analyze --query "I love tech stocks"
 
 # Compatibility & Dimension Management
 contrag compat test
@@ -52,6 +86,12 @@ contrag introspect --format json
 - **Weaviate** - Cloud-native vector database
 - **pgvector** - PostgreSQL extension for high-performance vectors
 - **Automatic Chunking** - Intelligent context splitting with overlap
+
+### 🎯 Intelligent User Personalization
+- **Automatic Preference Learning** - Extract preferences from natural conversation
+- **Dynamic User Profiles** - Build evolving user profiles from interactions
+- **Multi-Domain Support** - Finance, e-commerce, content, and custom domains
+- **Privacy Controls** - Configurable data retention and anonymization
 
 ### 🎯 Entity Relationship Mapping
 - **Automatic Schema Detection** - Introspect existing database schemas
@@ -126,6 +166,19 @@ contrag config validate
   "systemPrompts": {
     "default": "You are a helpful assistant with access to user data.",
     "recommendations": "Focus on personalized product recommendations."
+  },
+  "preferences": {
+    "enabled": true,
+    "extractionModel": "gpt-4",
+    "confidenceThreshold": 0.7,
+    "storage": {
+      "table": "user_preferences",
+      "retentionDays": 365
+    },
+    "privacy": {
+      "anonymize": false,
+      "requireConsent": true
+    }
   }
 }
 ```
@@ -141,14 +194,35 @@ await sdk.configure(config);
 // Build context for a user
 const result = await sdk.buildFor('users', '123');
 
-// Query the context
-const response = await sdk.query('users:123', 'What orders has this user placed?');
+// Query with automatic preference tracking (NEW in v1.3)
+const response = await sdk.query({
+  userId: 'user123', 
+  query: 'I like large cap tech stocks. What should I invest in?',
+  masterEntity: 'users'
+}, { preferenceTracking: true });
+
+// Access extracted preferences
+console.log(response.preferences); // Newly extracted user preferences
+console.log(response.context);     // RAG context with preference-aware results
 
 // Get related sample data
 const sampleData = await sdk.getRelatedSampleData('users', '123');
+
+// Manage user preferences
+const userPrefs = await sdk.getUserPreferences('user123');
+await sdk.updateUserPreferences('user123', newPreferences);
 ```
 
 ## 📋 CLI Commands
+
+### Preference Management (NEW)
+```bash
+contrag preferences show --user-id user123      # View user preferences  
+contrag preferences export --user-id user123    # Export to JSON
+contrag preferences clear --user-id user123     # Clear old preferences
+contrag preferences analyze --query "text"      # Test preference extraction
+contrag analytics preferences                   # Preference analytics
+```
 
 ### Configuration Management
 ```bash
@@ -333,7 +407,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**ContRAG v1.1** - Making RAG integration simple, powerful, and production-ready.
+**ContRAG v1.3** - Making RAG integration simple, powerful, and intelligently personalized.
 
 ## Installation
 
@@ -443,6 +517,11 @@ Create a `contrag.config.json` file:
   "contextBuilder": {
     "chunkSize": 1000,
     "overlap": 200
+  },
+  "preferences": {
+    "enabled": true,
+    "extractionModel": "gpt-4",
+    "confidenceThreshold": 0.7
   }
 }
 ```
@@ -472,6 +551,11 @@ CONTRAG_VECTOR_API_KEY=optional-api-key
 CONTRAG_EMBEDDER_PLUGIN=openai
 CONTRAG_OPENAI_API_KEY=your-openai-api-key
 CONTRAG_OPENAI_MODEL=text-embedding-ada-002
+
+# Preferences (NEW in v1.3)
+CONTRAG_PREFERENCES_ENABLED=true
+CONTRAG_PREFERENCES_MODEL=gpt-4
+CONTRAG_PREFERENCES_CONFIDENCE=0.7
 ```
 
 ## Supported Plugins
@@ -558,9 +642,11 @@ CONTRAG_OPENAI_MODEL=text-embedding-ada-002
 1. **Schema Introspection**: Contrag analyzes your database structure to understand entities and relationships
 2. **Entity Graph Building**: Starting from a master entity and UID, it recursively traverses relationships to build a complete graph
 3. **Context Generation**: The entity graph is flattened into structured text chunks
-4. **Embedding Creation**: Text chunks are converted to embeddings using your chosen provider
-5. **Vector Storage**: Embeddings are stored with metadata in your vector database
-6. **Querying**: Natural language queries retrieve relevant context chunks
+4. **Preference Extraction** (NEW): AI analyzes user queries to extract preferences and interests automatically
+5. **Embedding Creation**: Text chunks are converted to embeddings using your chosen provider
+6. **Vector Storage**: Embeddings are stored with metadata in your vector database
+7. **Preference Storage**: Extracted preferences are stored and linked to user profiles
+8. **Querying**: Natural language queries retrieve relevant context chunks enhanced with user preferences
 
 ## Architecture
 
