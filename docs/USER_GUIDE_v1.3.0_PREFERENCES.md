@@ -1,6 +1,6 @@
 # ContRAG User Guide v1.3.0 - Preference Tracking Update
 
-## 🎯 Intelligent Preference Tracking
+##  Intelligent Preference Tracking
 
 ContRAG v1.3.0 introduces **Intelligent Preference Tracking** - a powerful system that automatically learns user preferences from natural conversation and uses them to enhance RAG responses.
 
@@ -79,7 +79,7 @@ The system will automatically extract and structure preferences:
 }
 ```
 
-## 📋 Preference Management
+## Preference Management
 
 ### View User Preferences
 
@@ -156,7 +156,7 @@ contrag preferences clear --user-id user123 --categories "temp,test"
 }
 ```
 
-## 🎯 Use Cases & Examples
+##  Use Cases & Examples
 
 ### Financial Services
 
@@ -256,7 +256,7 @@ const suggestions = await contrag.query({
 // Suggestions prioritize sci-fi and nature content
 ```
 
-## ⚙️ Advanced Configuration
+##  Advanced Configuration
 
 ### Custom Preference Categories
 
@@ -336,7 +336,7 @@ const config = {
 };
 ```
 
-## 🔒 Privacy & Security
+##  Privacy & Security
 
 ### Data Protection
 
@@ -400,7 +400,7 @@ await contrag.recordUserConsent('user123', {
 });
 ```
 
-## 📊 Analytics & Insights
+##  Analytics & Insights
 
 ### User Analytics
 
@@ -517,7 +517,7 @@ contrag analyze categories --timeframe 30d
 contrag analyze gaps --domain financial
 ```
 
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -589,7 +589,7 @@ contrag audit data-processing --timeframe 7d
 }
 ```
 
-## 🚀 Best Practices
+##  Best Practices
 
 ### Preference Design Patterns
 

@@ -21,11 +21,11 @@ Contrag is a comprehensive Retrieval-Augmented Generation (RAG) system that inte
 
 ### Key Features
 
-- **🔍 Smart Schema Introspection** - Automatically understands your database structure
-- **🕸️ Entity Relationship Mapping** - Discovers and maps data relationships
-- **🧠 Multi-Model AI Support** - Works with OpenAI, Gemini, Claude, and more
-- **📊 Multi-Database Support** - MongoDB, PostgreSQL, MySQL, and vector databases
-- **⚡ High Performance** - Optimized chunking and embedding strategies
+- ** Smart Schema Introspection** - Automatically understands your database structure
+- **Entity Relationship Mapping** - Discovers and maps data relationships
+- ** Multi-Model AI Support** - Works with OpenAI, Gemini, Claude, and more
+- ** Multi-Database Support** - MongoDB, PostgreSQL, MySQL, and vector databases
+- ** High Performance** - Optimized chunking and embedding strategies
 - **🔌 Plugin Architecture** - Extensible and customizable
 
 ### Quick Start

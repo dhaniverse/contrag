@@ -280,7 +280,7 @@ CREATE TABLE contrag_embeddings (
 
 ---
 
-### Gemini Embeddings Plugin (`gemini`) ⚡ New!
+### Gemini Embeddings Plugin (`gemini`)  New!
 
 **Use Cases:**
 - Free tier development and testing

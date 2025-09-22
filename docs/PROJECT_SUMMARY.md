@@ -1,10 +1,10 @@
-# 🎉 Contrag MVP - Project Summary
+#  Contrag MVP - Project Summary
 
 ## ✅ What We've Built
 
 **Contrag** is now a fully functional TypeScript library for runtime schema introspection and dynamic entity graph building. Here's what has been implemented:
 
-### 🏗️ Core Architecture
+### Core Architecture
 
 - **Plugin-based architecture** - Extensible system for databases, vector stores, and embedders
 - **TypeScript SDK** - Fully typed API for programmatic use  
@@ -25,7 +25,7 @@
    - ✅ Array relationship handling
    - ✅ Time series collection support
 
-### 🧠 Vector Store Plugins
+###  Vector Store Plugins
 
 1. **Weaviate Plugin** (`weaviate`)
    - ✅ Automatic schema creation
@@ -37,28 +37,28 @@
    - ✅ SQL-based vector storage
    - ✅ Automatic table and index creation
 
-### 🔗 Embedder Plugins
+### Embedder Plugins
 
 1. **OpenAI Embeddings** (`openai`)
    - ✅ Support for all OpenAI models
    - ✅ Configurable model selection
    - ✅ Batch processing for efficiency
 
-### 📝 Context Building
+###  Context Building
 
 - ✅ **Entity graph flattening** - Converts complex relationships into readable text
 - ✅ **Smart chunking** - Respects natural boundaries (sentences, paragraphs)
 - ✅ **Configurable chunk size and overlap**
 - ✅ **Metadata preservation** - Maintains entity relationships and timestamps
 
-### 🖥️ CLI Commands
+### CLI Commands
 
 - ✅ `contrag init` - Initialize configuration
 - ✅ `contrag introspect` - Print database schema
 - ✅ `contrag build --entity User --uid 123` - Build context for entity
 - ✅ `contrag query --namespace User:123 --query "..."` - Query vector store
 
-### 🔧 SDK API
+### SDK API
 
 - ✅ `ctx.configure(config)` - Setup with configuration
 - ✅ `ctx.introspectSchema()` - Get database schema  
@@ -66,7 +66,7 @@
 - ✅ `ctx.query(namespace, query)` - Query for context chunks
 - ✅ `ctx.getEntityGraph(entity, uid)` - Get raw entity relationships
 
-### 📚 Documentation & Examples
+### Documentation & Examples
 
 - ✅ Comprehensive README with setup instructions
 - ✅ SETUP.md with detailed configuration guide
@@ -81,7 +81,7 @@
 - ✅ ESLint configuration for code quality
 - ✅ All tests passing
 
-## 📁 Project Structure
+## Project Architecture
 
 ```
 contrag/
@@ -114,7 +114,7 @@ contrag/
 └── .env.example                    # Environment variables template
 ```
 
-## 🚀 Ready to Use
+##  Ready to Use
 
 The library is **production-ready** and can be:
 
@@ -124,7 +124,7 @@ The library is **production-ready** and can be:
 4. **Used via CLI** - Run commands directly from terminal
 5. **Extended with plugins** - Add new databases, vector stores, or embedders
 
-## 🎯 MVP Requirements Met
+##  MVP Requirements Met
 
 ✅ **Installable TypeScript library** - Published as npm package  
 ✅ **Lightweight CLI** - Full command-line interface  
@@ -168,4 +168,4 @@ While the MVP is complete, here are logical next steps:
    - Context exploration dashboard
    - Integration templates for popular frameworks
 
-The Contrag MVP successfully delivers a fully functional, plugin-based system for building personalized vector stores from entity relationships - exactly as specified! 🎉
+The Contrag MVP successfully delivers a fully functional, plugin-based system for building personalized vector stores from entity relationships - exactly as specified! 

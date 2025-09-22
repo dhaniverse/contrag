@@ -2,7 +2,7 @@
 
 This guide shows you how to thoroughly test the Contrag package locally using Docker and free Gemini embeddings, without needing to publish to npm.
 
-## 🎯 What You'll Test
+##  What You'll Test
 
 ✅ **All Plugin Combinations**: PostgreSQL/MongoDB + Weaviate/pgvector + Gemini embeddings  
 ✅ **Schema Introspection**: Automatic discovery of database structures  
@@ -13,7 +13,7 @@ This guide shows you how to thoroughly test the Contrag package locally using Do
 ✅ **CLI Commands**: All contrag commands  
 ✅ **SDK Integration**: Programmatic usage  
 
-## 🚀 Quick Setup (5 minutes)
+##  Quick Setup (5 minutes)
 
 ### 1. Get Free Gemini API Key
 - Go to [Google AI Studio](https://aistudio.google.com/)
@@ -48,7 +48,7 @@ sed -i '' 's/your-gemini-api-key/YOUR_ACTUAL_API_KEY_HERE/' contrag.config.json
 node test-package.js
 ```
 
-## 📋 Available Test Configurations
+## Available Test Configurations
 
 We've created 3 optimized test configurations:
 
@@ -148,7 +148,7 @@ EOF
 node test.js
 ```
 
-## 📊 Sample Data Included
+##  Sample Data Included
 
 The Docker setup includes realistic test data:
 
@@ -181,7 +181,7 @@ The Docker setup includes realistic test data:
 
 **One full test cycle = ~5 API calls**
 
-## 🔍 Verification Commands
+##  Verification Commands
 
 **Check Docker Services:**
 ```bash
@@ -252,26 +252,10 @@ docker-compose up -d
 }
 ```
 
-## 📈 Performance Testing
-
-**Test with Multiple Users:**
-```bash
-# Build contexts for multiple users simultaneously
-for i in {1..5}; do
-  npx contrag build --entity users --uid $i &
-done
-wait
-echo "Built 5 user contexts in parallel"
-```
-
-**Monitor Resource Usage:**
-```bash
-# Docker container resources
-docker stats
-
-# API usage tracking
-echo "Check https://aistudio.google.com/ for Gemini usage"
-```
+#### Performance Testing
+- Monitor API response times under load
+- Test concurrent user interactions
+- Validate memory usage and optimization
 
 ## 🧹 Cleanup
 
@@ -305,7 +289,7 @@ npm unlink
 git checkout -- .
 ```
 
-## 🎯 Success Criteria
+##  Success Criteria
 
 Your local testing is successful when you can:
 
@@ -318,7 +302,7 @@ Your local testing is successful when you can:
 ✅ **Use** the SDK programmatically in test projects  
 ✅ **Run** all CLI commands successfully  
 
-## 🚀 Ready for Production
+##  Ready for Production
 
 Once local testing passes, you're ready to:
 
@@ -328,6 +312,6 @@ Once local testing passes, you're ready to:
 4. **Monitor performance**: Add logging and metrics
 5. **Integrate with LLMs**: Use retrieved context for AI responses
 
-**Your Contrag package is production-ready!** 🎉
+**Your Contrag package is production-ready!** 
 
 The local testing environment gives you complete confidence that all plugins work correctly before publishing or deploying to production.

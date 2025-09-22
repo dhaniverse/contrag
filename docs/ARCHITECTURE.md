@@ -1,26 +1,25 @@
-# ContRAG Architecture Documentation v1.3.0
+# ContRAG Architecture Guide v1.3.0
 
 ## Overview
 
-ContRAG v1.3.0 is a sophisticated Retrieval-Augmented Generation (RAG) system with revolutionary **Intelligent Preference Tracking** capabilities. The system intelligently extracts, processes, and queries complex database schemas while automatically learning user preferences from natural conversation. This document provides comprehensive High-Level Design (HLD) and Low-Level Design (LLD) documentation.
+ContRAG (Contextual Retrieval Augmented Generation) is a TypeScript library that provides configurable RAG (Retrieval-Augmented Generation) capabilities with intelligent preference tracking. The library supports various vector databases and embedding providers through a plugin-based architecture.
+
+**New in v1.3.0:** Intelligent Preference Tracking system that learns from user interactions to provide personalized responses.
 
 ## Table of Contents
 
-1. [System Architecture](#system-architecture)
-2. [NEW: Preference System Architecture](#preference-system-architecture) 
-3. [Core Components](#core-components)
-4. [Data Flow](#data-flow)
-5. [Plugin Architecture](#plugin-architecture)
-6. [Entity Relationship Engine](#entity-relationship-engine)
-7. [Vector Storage & Retrieval](#vector-storage--retrieval)
-8. [Context Building Strategy](#context-building-strategy)
-9. [Performance Optimizations](#performance-optimizations)
-10. [Security Architecture](#security-architecture)
-11. [Scalability Considerations](#scalability-considerations)
-12. [Integration Patterns](#integration-patterns)
-13. [Implementation Details](#implementation-details)
+1. [Core Architecture](#core-architecture)
+2. [Intelligent Preference System (NEW)](#intelligent-preference-system-new)
+3. [Plugin System](#plugin-system)
+4. [Configuration Management](#configuration-management)
+5. [Context Building](#context-building)
+6. [Error Handling](#error-handling)
+7. [Performance Optimization](#performance-optimization)
+8. [Security Architecture](#security-architecture)
+9. [Scalability Considerations](#scalability-considerations)
+10. [Migration from Previous Versions](#migration-from-previous-versions)
 
-## System Architecture
+## Core Architecture
 
 ### High-Level Architecture v1.3.0
 
@@ -38,7 +37,7 @@ graph TB
         F[Plugin Registry]
     end
     
-    subgraph "🔥 NEW: Preference System"
+    subgraph " NEW: Preference System"
         G[Preference Extraction Engine]
         H[LLM Preference Analyzer]
         I[Preference Storage Manager]
@@ -55,7 +54,7 @@ graph TB
     subgraph "Data Storage Layer"
         O[(Primary Database)]
         P[(Vector Store)]
-        Q[(🔥 Preference Store)]
+        Q[( Preference Store)]
     end
     
     subgraph "AI/ML Services"
@@ -119,7 +118,7 @@ sequenceDiagram
     SDK->>App: return buildResult
 ```
 
-## 🔥 NEW: Preference System Architecture
+##  NEW: Preference System Architecture
 
 ### Preference Extraction Data Flow
 

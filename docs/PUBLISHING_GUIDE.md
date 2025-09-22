@@ -10,7 +10,7 @@
 - [x] README.md is comprehensive and professional
 - [x] Version number is appropriate (1.0.0)
 
-## 🚀 Publishing Steps
+##  Publishing Steps
 
 ### Step 1: Create NPM Account (If Needed)
 
@@ -112,7 +112,7 @@ const result = await contrag.query('User:123', 'What orders did I place?');
 console.log(result);
 ```
 
-## 🔄 Future Updates
+## Future Updates
 
 When you want to publish updates:
 
@@ -129,7 +129,7 @@ When you want to publish updates:
    npm publish
    ```
 
-## 🏷️ Package Tags
+## Package Tags
 
 You can publish with different tags:
 
@@ -144,20 +144,20 @@ npm publish --tag beta
 npm publish --tag alpha
 ```
 
-## 📊 Package Statistics
+##  Package Statistics
 
 After publishing, you can:
 - View download stats: https://www.npmjs.com/package/contrag
 - Monitor usage with `npm view contrag`
 - See version history with `npm view contrag versions --json`
 
-## 🔒 Security
+##  Security
 
 - Enable 2FA on your NPM account
 - Use `npm audit` to check for vulnerabilities
 - Keep dependencies updated
 
-## 📝 Package Information
+##  Package Information
 
 - **Name**: contrag
 - **Current Version**: 1.0.0
@@ -170,6 +170,6 @@ After publishing, you can:
 
 ---
 
-Ready to publish! Just run `npm login` then `npm publish` 🚀
+Ready to publish! Just run `npm login` then `npm publish` 
 
 ````

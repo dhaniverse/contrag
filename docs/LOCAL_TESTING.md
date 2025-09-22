@@ -154,7 +154,7 @@ async function testContrag() {
     console.log('🔌 Connecting...');
     await sdk.configure(config);
     
-    console.log('🔍 Introspecting schema...');
+    console.log(' Introspecting schema...');
     const schema = await sdk.introspectSchema();
     console.log(`Found ${schema.length} entities:`, schema.map(s => s.name));
     
@@ -165,7 +165,7 @@ async function testContrag() {
     const result = await sdk.buildFor(entity, uid);
     console.log(`Built context: ${result.chunksCreated} chunks created`);
     
-    console.log('\n🔍 Querying context...');
+    console.log('\n Querying context...');
     const queryResult = await sdk.query(`${entity}:${uid}`, 'What information do we have about this user?', 3);
     console.log(`Found ${queryResult.chunks.length} relevant chunks:`);
     queryResult.chunks.forEach((chunk, i) => {
@@ -365,4 +365,4 @@ rm -f contrag.config.json test-local.js .env.local
 - Test connections manually using the verification commands above
 - Check the GitHub issues for known problems
 
-This local testing setup gives you a complete Contrag environment with real data to experiment with all plugin combinations! 🚀
+This local testing setup gives you a complete Contrag environment with real data to experiment with all plugin combinations! 

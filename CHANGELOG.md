@@ -58,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2024-12-19
 
-### 🚀 Major Features Added
+### Major Features Added
 
 #### Master Entity Configuration
 - **NEW**: Master entity definitions via `masterEntities` in config.json
@@ -112,7 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **NEW**: Optional `getStats()`, `listNamespaces()`, `searchSimilar()` for vector store plugins
 - **NEW**: System prompt support in embedder plugins
 
-### 🛠 Technical Improvements
+### Technical Improvements
 
 #### Code Organization
 - **NEW**: `constants.ts` - Centralized configuration constants
@@ -132,7 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **IMPROVED**: Vector store plugins with statistics and search capabilities
 - **IMPROVED**: Embedder plugins with connection testing
 
-### 📚 Documentation
+### Documentation
 
 #### Comprehensive Guides
 - **NEW**: `docs/ENHANCED_FEATURES.md` - Complete feature documentation
@@ -147,7 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **NEW**: Express.js integration patterns
 - **NEW**: Cron job setup for maintenance
 
-### 🔧 Configuration Schema Changes
+### Configuration Schema Changes
 
 #### New Configuration Options
 ```json
@@ -173,7 +173,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 }
 ```
 
-### 🎯 CLI Usage Examples
+### CLI Usage Examples
 
 #### Configuration Management
 ```bash
@@ -206,18 +206,18 @@ contrag vector namespaces
 contrag vector search --text "user orders" --namespace User:123
 ```
 
-### ⚡ Performance Improvements
+### Performance Improvements
 - **IMPROVED**: Configurable batch processing for large datasets
 - **IMPROVED**: Connection pooling optimization
 - **IMPROVED**: Memory usage optimization for large entity graphs
 - **IMPROVED**: Retry logic for failed operations
 
-### 🔒 Breaking Changes
+### Breaking Changes
 - **BREAKING**: CLI command structure reorganized with subcommands
 - **BREAKING**: Configuration schema extended (backwards compatible for basic usage)
 - **BREAKING**: Some plugin interfaces extended (optional methods)
 
-### 🐛 Bug Fixes
+### Bug Fixes
 - **FIXED**: Hardcoded chunk sizes and overlap values
 - **FIXED**: Inconsistent error messages
 - **FIXED**: Connection timeout issues

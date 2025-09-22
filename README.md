@@ -3,32 +3,32 @@
 [![npm version](https://badge.fury.io/js/contrag.svg)](https://badge.fury.io/js/contrag)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) systems that automatically introspect your existing database schema, build comprehensive entity relationship graphs, and create i# Build personalized vector store
-const result = await ctx.buildFor("User", "user_123");
+ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) systems that automatically introspect your existing database schema, build comprehensive entity relationship graphs, and create intelligent vector stores for personalized context retrieval.
 
-// Query with preference tracking (NEW in v1.3)  
-const queryResult = await ctx.query({
-  userId: "user_123",
-  query: "I p- **Customer Support**: Build context about customer interactions, orders, and support tickets with personalized preferences
-- **E-commerce**: Generate personalized product recommendations based on user behavior and stated preferences
-- **Financial Services**: Create investment recommendations based on user risk tolerance and stated preferences
-- **Healthcare**: Build patient-centric views combining medical records, appointments, treatments, and care preferences
-- **Finance**: Build comprehensive user profiles including transactions, accounts, interactions, and investment preferencesr sustainable investments. What should I invest in?", 
-  masterEntity: "User"
-}, { preferenceTracking: true });
+## Table of Contents
 
-// Access both context and extracted preferences
-console.log('Context chunks:', queryResult.chunks);
-console.log('Extracted preferences:', queryResult.preferences);
+- [What's New in v1.3](#whats-new-in-v13)
+- [Key Features](#key-features)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Supported Plugins](#supported-plugins)
+- [CLI Commands](#cli-commands)
+- [SDK Usage](#sdk-usage)
+- [Use Cases](#use-cases)
+- [Architecture](#architecture)
+- [Documentation](#documentation)
+- [Configuration Templates](#configuration-templates)
+- [Advanced Features](#advanced-features)
+- [Performance & Scalability](#performance--scalability)
+- [Development](#development)
+- [Contributing](#contributing)
+- [Support](#support)
+- [License](#license)
 
-// Use the retrieved context with your LLM
-for (const chunk of queryResult.chunks) {
-  console.log(chunk.content);
-} vector stores for personalized context retrieval.
+## What's New in v1.3
 
-## 🚀 What's New in v1.3
-
-### 🧠 Intelligent Preference Tracking (NEW)
+### Intelligent Preference Tracking (NEW)
 - **AI-Powered Preference Extraction** - Automatically identify user preferences from natural conversation
 - **Smart User Profiling** - Build dynamic user profiles that evolve with interactions
 - **Seamless Integration** - Optional preference tracking with simple API flag
@@ -36,70 +36,43 @@ for (const chunk of queryResult.chunks) {
 - **Privacy-First Design** - Configurable data retention and anonymization options
 
 ### Enhanced Features from v1.1
-- **🎯 Master Entity Configuration** - Define entity relationships via config
-- **🤖 System Prompt Support** - Customize LLM behavior for different use cases  
-- **🔧 Comprehensive CLI Debugging** - Test connections, analyze data, manage vectors
-- **⚙️ Smart Compatibility Testing** - Detect and auto-fix dimension mismatches, connection issues
-- **📊 Advanced Analytics** - Vector store stats, similarity search, health monitoring
-- **⚡ Production Ready** - Batch processing, monitoring, error handling
+- **Master Entity Configuration** - Define entity relationships via config
+- **System Prompt Support** - Customize LLM behavior for different use cases  
+- **Comprehensive CLI Debugging** - Test connections, analyze data, manage vectors
+- **Smart Compatibility Testing** - Detect and auto-fix dimension mismatches, connection issues
+- **Advanced Analytics** - Vector store stats, similarity search, health monitoring
+- **Production Ready** - Batch processing, monitoring, error handling
 
-### Enhanced CLI Commands
-```bash
-# Configuration & Testing
-contrag config init --template mongodb
-contrag config validate
-contrag test all
+## Key Features
 
-# Preference Management (NEW in v1.3)
-contrag preferences show --user-id user123
-contrag preferences export --user-id user123 --format json
-contrag preferences clear --user-id user123 --older-than 30d
-contrag preferences analyze --query "I love tech stocks"
-
-# Compatibility & Dimension Management
-contrag compat test
-contrag compat fix-dimensions
-contrag compat validate-config
-
-# Data Analysis & Debugging
-contrag sample --entity User --uid 123
-contrag vector stats
-contrag vector search --text "user orders"
-
-# Schema & Relationships
-contrag introspect --format json
-```
-
-## ✨ Key Features
-
-### 🔄 Multi-Database Support
+### Multi-Database Support
 - **PostgreSQL** - Full relational database support with foreign keys
 - **MongoDB** - Document database with automatic relationship inference
 - **Mixed Environments** - Use MongoDB for primary data, PostgreSQL for vectors
 
-### 🧠 AI Integration
+### AI Integration
 - **OpenAI Embeddings** - GPT-based embedding models
 - **Google Gemini** - Advanced embedding capabilities  
 - **System Prompts** - Customize AI behavior per use case
 
-### 📦 Vector Storage
+### Vector Storage
 - **Weaviate** - Cloud-native vector database
 - **pgvector** - PostgreSQL extension for high-performance vectors
 - **Automatic Chunking** - Intelligent context splitting with overlap
 
-### 🎯 Intelligent User Personalization
+### Intelligent User Personalization
 - **Automatic Preference Learning** - Extract preferences from natural conversation
 - **Dynamic User Profiles** - Build evolving user profiles from interactions
 - **Multi-Domain Support** - Finance, e-commerce, content, and custom domains
 - **Privacy Controls** - Configurable data retention and anonymization
 
-### 🎯 Entity Relationship Mapping
+### Entity Relationship Mapping
 - **Automatic Schema Detection** - Introspect existing database schemas
 - **Master Entity Configuration** - Define primary entities and relationships
 - **Time Series Support** - Handle temporal data automatically
 - **Complex Relationships** - One-to-one, one-to-many, many-to-many support
 
-## 🛠 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -213,211 +186,13 @@ const userPrefs = await sdk.getUserPreferences('user123');
 await sdk.updateUserPreferences('user123', newPreferences);
 ```
 
-## 📋 CLI Commands
-
-### Preference Management (NEW)
-```bash
-contrag preferences show --user-id user123      # View user preferences  
-contrag preferences export --user-id user123    # Export to JSON
-contrag preferences clear --user-id user123     # Clear old preferences
-contrag preferences analyze --query "text"      # Test preference extraction
-contrag analytics preferences                   # Preference analytics
-```
-
-### Configuration Management
-```bash
-contrag config init [--template] [--force]    # Initialize configuration
-contrag config validate                       # Validate and test connections
-contrag config view                           # View current configuration
-```
-
-### Connection Testing
-```bash
-contrag test all                             # Test all connections
-contrag test db                              # Test database only
-contrag test vector                          # Test vector store only
-contrag test embedder                        # Test embedder only
-```
-
-### Compatibility Testing
-```bash
-contrag compatibility test                    # Run comprehensive compatibility tests
-contrag compat test --database-only          # Test database compatibility only
-contrag compat test --vector-store-only      # Test vector store compatibility only
-contrag compat test --embedder-only          # Test embedder compatibility only
-contrag compat test --dimensions-only        # Test dimension compatibility only
-contrag compat fix-dimensions                # Auto-fix dimension mismatches
-contrag compat validate-config               # Validate configuration schema
-```
-
-### Schema Analysis
-```bash
-contrag introspect [--format json]          # Analyze database schema
-contrag sample --entity User [--uid 123]    # Get sample data
-contrag sample unified --master-entity users # Get unified sample data
-```
-
-### Vector Store Management
-```bash
-contrag vector stats                         # Show statistics
-contrag vector namespaces                    # List namespaces
-contrag vector search --text "query"        # Search vectors
-contrag vector clear                         # Clear all vectors
-```
-
-### Context Building & Querying
-```bash
-contrag build --entity User --uid 123       # Build context
-contrag query --namespace User:123 --query "text"  # Query context
-```
-
-## 🏗 Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Your Database │    │   AI Embeddings  │    │  Vector Storage │
-│                 │    │                  │    │                 │
-│  PostgreSQL     │────│     OpenAI       │────│    Weaviate     │
-│  MongoDB        │    │     Gemini       │    │    pgvector     │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                        │                        │
-         └────────────────────────┼────────────────────────┘
-                                  │
-                        ┌─────────▼─────────┐
-                        │                   │
-                        │   ContRAG SDK     │
-                        │   - Schema Analysis│
-                        │   - Relationship  │
-                        │     Mapping       │
-                        │   - Context Build │
-                        │   - Query Engine  │
-                        └───────────────────┘
-```
-
-## 🎯 Use Cases
-
-### E-commerce Personalization
-- Build user profiles from order history, preferences, and behavior
-- Generate personalized product recommendations
-- Provide context-aware customer support
-
-### CRM Enhancement  
-- Create comprehensive customer profiles from interactions
-- Generate insights from deal history and communications
-- Enable intelligent lead scoring and recommendations
-
-### Content Management
-- Build user reading history and preferences
-- Generate personalized content recommendations
-- Create context-aware search and discovery
-
-### Analytics & Insights
-- Analyze user behavior patterns across entities
-- Generate business intelligence from relationship data
-- Create predictive models from historical patterns
-
-## 📚 Documentation
-
-- **[Enhanced Features Guide](docs/ENHANCED_FEATURES.md)** - Complete feature documentation
-- **[MongoDB + Gemini + pgvector Setup](docs/MONGODB_GEMINI_PGVECTOR_SETUP.md)** - Step-by-step integration guide  
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - System architecture overview
-- **[API Reference](docs/API_REFERENCE.md)** - Complete SDK documentation
-
-## 🔧 Configuration Templates
-
-### Available Templates
-- **`basic`** - PostgreSQL + Weaviate + OpenAI (simple setup)
-- **`mongodb`** - MongoDB + Weaviate + OpenAI (document database)  
-- **`postgres`** - PostgreSQL + pgvector + Gemini (all Postgres)
-- **`advanced`** - Full configuration with master entities and system prompts
-
-```bash
-# Use templates for quick setup
-contrag config init --template mongodb
-contrag config init --template postgres  
-contrag config init --template advanced
-```
-
-## 🌟 Advanced Features
-
-### Master Entity Configuration
-Define complex entity relationships and traversal rules:
-
-```json
-{
-  "masterEntities": [
-    {
-      "name": "User",
-      "primaryKey": "id",
-      "relationships": {
-        "orders": {"entity": "Order", "type": "one-to-many", ...},
-        "profile": {"entity": "UserProfile", "type": "one-to-one", ...}
-      },
-      "sampleFilters": {"active": true}
-    }
-  ]
-}
-```
-
-### System Prompts
-Customize AI behavior for different scenarios:
-
-```json
-{
-  "systemPrompts": {
-    "default": "General assistant behavior...",
-    "recommendations": "Focus on product recommendations...",  
-    "support": "Provide customer support...",
-    "analytics": "Analyze data patterns..."
-  }
-}
-```
-
-### Production Monitoring
-Built-in health checks and monitoring:
-
-```javascript
-// Health monitoring
-const dbHealth = await sdk.testDatabaseConnection();
-const vectorHealth = await sdk.testVectorStoreConnection();
-const stats = await sdk.getVectorStoreStats();
-```
-
-## 🚀 Performance & Scalability
-
-- **Batch Processing** - Handle large datasets efficiently
-- **Connection Pooling** - Optimize database connections
-- **Configurable Chunking** - Balance context size vs. performance
-- **Relationship Limits** - Prevent entity graph explosion
-- **Caching Support** - Cache frequently accessed data
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **GitHub Issues** - Bug reports and feature requests
-- **Documentation** - Comprehensive guides and examples  
-- **Community** - Join our Discord for discussions
-
----
-
-**ContRAG v1.3** - Making RAG integration simple, powerful, and intelligently personalized.
-
 ## Installation
 
 ```bash
 npm install contrag
 ```
 
-## Quick Start
-
-### 1. CLI Usage
+### CLI Usage
 
 Initialize configuration:
 ```bash
@@ -439,7 +214,7 @@ Query the built context:
 npx contrag query --namespace User:123 --query "What orders did I place?"
 ```
 
-### 2. SDK Usage
+### SDK Usage
 
 ```typescript
 import { ContragSDK, ContragConfig } from 'contrag';
@@ -475,8 +250,16 @@ await ctx.configure(config);
 // Build personalized vector store
 const result = await ctx.buildFor("User", "user_123");
 
-// Query for context
-const queryResult = await ctx.query("User:user_123", "What orders did I place?");
+// Query with preference tracking (NEW in v1.3)  
+const queryResult = await ctx.query({
+  userId: "user_123",
+  query: "I prefer sustainable investments. What should I invest in?", 
+  masterEntity: "User"
+}, { preferenceTracking: true });
+
+// Access both context and extracted preferences
+console.log('Context chunks:', queryResult.chunks);
+console.log('Extracted preferences:', queryResult.preferences);
 
 // Use the retrieved context with your LLM
 for (const chunk of queryResult.chunks) {
@@ -637,6 +420,64 @@ CONTRAG_PREFERENCES_CONFIDENCE=0.7
 }
 ```
 
+## CLI Commands
+
+### Preference Management (NEW)
+```bash
+contrag preferences show --user-id user123      # View user preferences  
+contrag preferences export --user-id user123    # Export to JSON
+contrag preferences clear --user-id user123     # Clear old preferences
+contrag preferences analyze --query "text"      # Test preference extraction
+contrag analytics preferences                   # Preference analytics
+```
+
+### Configuration Management
+```bash
+contrag config init [--template] [--force]    # Initialize configuration
+contrag config validate                       # Validate and test connections
+contrag config view                           # View current configuration
+```
+
+### Connection Testing
+```bash
+contrag test all                             # Test all connections
+contrag test db                              # Test database only
+contrag test vector                          # Test vector store only
+contrag test embedder                        # Test embedder only
+```
+
+### Compatibility Testing
+```bash
+contrag compatibility test                    # Run comprehensive compatibility tests
+contrag compat test --database-only          # Test database compatibility only
+contrag compat test --vector-store-only      # Test vector store compatibility only
+contrag compat test --embedder-only          # Test embedder compatibility only
+contrag compat test --dimensions-only        # Test dimension compatibility only
+contrag compat fix-dimensions                # Auto-fix dimension mismatches
+contrag compat validate-config               # Validate configuration schema
+```
+
+### Schema Analysis
+```bash
+contrag introspect [--format json]          # Analyze database schema
+contrag sample --entity User [--uid 123]    # Get sample data
+contrag sample unified --master-entity users # Get unified sample data
+```
+
+### Vector Store Management
+```bash
+contrag vector stats                         # Show statistics
+contrag vector namespaces                    # List namespaces
+contrag vector search --text "query"        # Search vectors
+contrag vector clear                         # Clear all vectors
+```
+
+### Context Building & Querying
+```bash
+contrag build --entity User --uid 123       # Build context
+contrag query --namespace User:123 --query "text"  # Query context
+```
+
 ## How It Works
 
 1. **Schema Introspection**: Contrag analyzes your database structure to understand entities and relationships
@@ -650,13 +491,58 @@ CONTRAG_PREFERENCES_CONFIDENCE=0.7
 
 ## Architecture
 
-Contrag is built around a plugin architecture:
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Your Database │    │   AI Embeddings  │    │  Vector Storage │
+│                 │    │                  │    │                 │
+│  PostgreSQL     │────│     OpenAI       │────│    Weaviate     │
+│  MongoDB        │    │     Gemini       │    │    pgvector     │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                        │                        │
+         └────────────────────────┼────────────────────────┘
+                                  │
+                        ┌─────────▼─────────┐
+                        │                   │
+                        │   ContRAG SDK     │
+                        │   - Schema Analysis│
+                        │   - Relationship  │
+                        │     Mapping       │
+                        │   - Context Build │
+                        │   - Query Engine  │
+                        │   - Preference    │
+                        │     Tracking      │
+                        └───────────────────┘
+```
 
-- **DBPlugin**: Interface for database connections and schema introspection
-- **VectorStorePlugin**: Interface for vector storage and retrieval
-- **EmbedderPlugin**: Interface for text embedding generation
+## Use Cases
 
-This design allows easy extension with new databases, vector stores, and embedding providers.
+### E-commerce Personalization
+- Build user profiles from order history, preferences, and behavior
+- Generate personalized product recommendations
+- Provide context-aware customer support
+
+### CRM Enhancement  
+- Create comprehensive customer profiles from interactions
+- Generate insights from deal history and communications
+- Enable intelligent lead scoring and recommendations
+
+### Content Management
+- Build user reading history and preferences
+- Generate personalized content recommendations
+- Create context-aware search and discovery
+
+### Financial Services
+- Analyze user behavior patterns across entities
+- Generate business intelligence from relationship data
+- Create predictive models from historical patterns with user preferences
+
+### Example Use Cases
+
+- **Customer Support**: Build context about customer interactions, orders, and support tickets with personalized preferences
+- **E-commerce**: Generate personalized product recommendations based on user behavior and stated preferences
+- **Financial Services**: Create investment recommendations based on user risk tolerance and stated preferences
+- **Healthcare**: Build patient-centric views combining medical records, appointments, treatments, and care preferences
+- **Finance**: Build comprehensive user profiles including transactions, accounts, interactions, and investment preferences
 
 ## Time Series Support
 
@@ -666,28 +552,100 @@ Contrag automatically detects and handles time-based data:
 - **MongoDB**: Detects timestamp fields and time series collections
 - **Context Building**: Includes temporal information in generated context
 
-## Example Use Cases
+## Documentation
 
-- **Customer Support**: Build context about customer interactions, orders, and support tickets
-- **E-commerce**: Generate personalized product recommendations based on user behavior
-- **Healthcare**: Create patient-centric views combining medical records, appointments, and treatments
-- **Finance**: Build comprehensive user profiles including transactions, accounts, and interactions
+### Core Documentation
+- **[v1.3.0 Release Notes](docs/v1.3.0_RELEASE_NOTES.md)** - New preference tracking features, migration guide, and breaking changes
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - Complete system architecture with preference tracking integration
+- **[Enhanced Features Guide](docs/ENHANCED_FEATURES.md)** - Detailed feature documentation including preference tracking
+- **[System Diagrams](docs/SYSTEM_DIAGRAMS_v1.3.0.md)** - High-level and low-level architecture diagrams in markdown format
 
-## 📚 Documentation
+### User Guides & Tutorials
+- **[User Guide](docs/USER_GUIDE.md)** - Complete guide to using ContRAG from setup to advanced features
+- **[Preference Tracking Guide](docs/USER_GUIDE_v1.3.0_PREFERENCES.md)** - Comprehensive preference tracking usage patterns and best practices
+- **[Database Guide](docs/DATABASE_GUIDE.md)** - Database setup, configuration, and optimization for all supported databases
 
-- **[User Guide](docs/USER_GUIDE.md)** - Complete guide to using Contrag, from setup to advanced features
-- **[Database Guide](docs/DATABASE_GUIDE.md)** - Comprehensive database setup, configuration, and optimization
-- **[Architecture Documentation](docs/ARCHITECTURE.md)** - Detailed system architecture and design decisions
-- **[Setup Guide](docs/SETUP.md)** - Installation and initial configuration
-- **[Testing Guide](docs/TESTING_GUIDE.md)** - Testing strategies and examples
-- **[Plugin Development](docs/PLUGINS.md)** - How to create custom plugins
+### Development & Integration
+- **[Setup Guide](docs/SETUP.md)** - Installation, configuration, and initial setup
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - Testing strategies, examples, and best practices
+- **[Plugin Development](docs/PLUGINS.md)** - How to create custom database, vector store, and embedder plugins
+- **[Local Testing Guide](docs/LOCAL_TESTING.md)** - Local development and testing setup
+- **[Compatibility Guide](docs/COMPATIBILITY_GUIDE.md)** - Cross-platform compatibility information
 
-### Examples
+### Deployment & Operations
+- **[Publishing Guide](docs/PUBLISHING_GUIDE.md)** - Package publishing and distribution
+- **[Project Summary](docs/PROJECT_SUMMARY.md)** - High-level project overview and components
+- **[Dimension Analysis](docs/DIMENSION_ANALYSIS_AND_FIXES.md)** - Vector dimension compatibility and fixes
+- **[MongoDB + Gemini + pgvector Setup](docs/MONGODB_GEMINI_PGVECTOR_SETUP.md)** - Specific integration guide
 
-Check out the `/examples` directory for complete working examples:
-- **Financial Game RAG** - AI tutoring system with personalized financial advice
-- **E-commerce RAG** - Product recommendations and customer insights
-- **Customer Support** - Context-aware support response system
+### Configuration Templates
+
+#### Available Templates
+- **`basic`** - PostgreSQL + Weaviate + OpenAI (simple setup)
+- **`mongodb`** - MongoDB + Weaviate + OpenAI (document database)  
+- **`postgres`** - PostgreSQL + pgvector + Gemini (all Postgres)
+- **`advanced`** - Full configuration with master entities, system prompts, and preference tracking
+
+```bash
+# Use templates for quick setup
+contrag config init --template mongodb
+contrag config init --template postgres  
+contrag config init --template advanced
+```
+
+### Advanced Features
+
+#### Master Entity Configuration
+Define complex entity relationships and traversal rules:
+
+```json
+{
+  "masterEntities": [
+    {
+      "name": "User",
+      "primaryKey": "id",
+      "relationships": {
+        "orders": {"entity": "Order", "type": "one-to-many", ...},
+        "profile": {"entity": "UserProfile", "type": "one-to-one", ...}
+      },
+      "sampleFilters": {"active": true}
+    }
+  ]
+}
+```
+
+#### System Prompts
+Customize AI behavior for different scenarios:
+
+```json
+{
+  "systemPrompts": {
+    "default": "General assistant behavior...",
+    "recommendations": "Focus on product recommendations...",  
+    "support": "Provide customer support...",
+    "analytics": "Analyze data patterns..."
+  }
+}
+```
+
+#### Production Monitoring
+Built-in health checks and monitoring:
+
+```javascript
+// Health monitoring
+const dbHealth = await sdk.testDatabaseConnection();
+const vectorHealth = await sdk.testVectorStoreConnection();
+const stats = await sdk.getVectorStoreStats();
+```
+
+### Performance & Scalability
+
+- **Batch Processing** - Handle large datasets efficiently
+- **Connection Pooling** - Optimize database connections
+- **Configurable Chunking** - Balance context size vs. performance
+- **Relationship Limits** - Prevent entity graph explosion
+- **Caching Support** - Cache frequently accessed data
+- **Preference Caching** - Intelligent caching for extracted preferences and user profiles
 
 ## Development
 
@@ -710,6 +668,20 @@ npm test
 npm run build:watch
 ```
 
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## Support
+
+- **GitHub Issues** - Bug reports and feature requests
+- **Documentation** - Comprehensive guides and examples  
+- **Community** - Join our Discord for discussions
+
 ## License
 
-MIT
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+**ContRAG v1.3** - Making RAG integration simple, powerful, and intelligently personalized.

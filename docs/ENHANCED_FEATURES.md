@@ -4,7 +4,7 @@ This document covers all enhanced features in ContRAG, including the revolutiona
 
 ## Table of Contents
 
-- [🧠 Intelligent Preference Tracking (NEW)](#intelligent-preference-tracking-new)
+- [Intelligent Preference Tracking (NEW)](#intelligent-preference-tracking-new)
 - [Configuration Management](#configuration-management)
 - [Master Entity Configuration](#master-entity-configuration)
 - [System Prompts](#system-prompts)
@@ -16,7 +16,7 @@ This document covers all enhanced features in ContRAG, including the revolutiona
 - [Privacy & Security](#privacy--security)
 - [Performance Optimization](#performance-optimization)
 
-## 🧠 Intelligent Preference Tracking (NEW)
+## Intelligent Preference Tracking (NEW)
 
 ### Overview
 
@@ -24,11 +24,11 @@ ContRAG v1.3.0 introduces **Intelligent Preference Tracking** that automatically
 
 ### Key Features
 
-- **🤖 AI-Powered Extraction** - Uses advanced LLMs to understand preferences in context
-- **📊 Structured Storage** - Organizes preferences by category, type, and confidence
-- **🔄 Dynamic Profiles** - User profiles evolve based on interactions  
-- **🎯 Context Enhancement** - RAG responses incorporate user preferences
-- **🔒 Privacy First** - Configurable anonymization and retention policies
+- **AI-Powered Extraction** - Uses advanced LLMs to understand preferences in context
+- **Structured Storage** - Organizes preferences by category, type, and confidence
+- **Dynamic Profiles** - User profiles evolve based on interactions  
+- **Context Enhancement** - RAG responses incorporate user preferences
+- **Privacy First** - Configurable anonymization and retention policies
 
 ### Basic Usage
 
