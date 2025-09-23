@@ -257,3 +257,233 @@ export interface ComprehensiveCompatibilityResult {
     criticalIssues: number;
   };
 }
+
+// V1.3.0 Preference Tracking Types
+export interface UserPreference {
+  id: string;
+  userId: string;
+  category: string;
+  type: 'explicit' | 'implicit' | 'inferred';
+  value: any;
+  confidence: number; // 0-1 scale
+  source: 'conversation' | 'behavior' | 'profile' | 'manual';
+  extractedAt: Date;
+  lastUpdated: Date;
+  context?: Record<string, any>;
+  metadata?: {
+    sessionId?: string;
+    conversationId?: string;
+    extractionMethod?: string;
+    llmModel?: string;
+    relevanceScore?: number;
+  };
+}
+
+export interface UserProfile {
+  userId: string;
+  createdAt: Date;
+  lastUpdated: Date;
+  preferences: UserPreference[];
+  segments: string[];
+  behaviorPatterns: BehaviorPattern[];
+  privacySettings: PrivacySettings;
+  analytics: UserAnalytics;
+  metadata?: Record<string, any>;
+}
+
+export interface BehaviorPattern {
+  id: string;
+  type: string;
+  pattern: Record<string, any>;
+  frequency: number;
+  confidence: number;
+  lastSeen: Date;
+  trending: boolean;
+}
+
+export interface PrivacySettings {
+  dataCollection: boolean;
+  personalizedContent: boolean;
+  analytics: boolean;
+  retentionPeriod: number; // days
+  shareWithThirdParty: boolean;
+  deleteOnRequest: boolean;
+}
+
+export interface UserAnalytics {
+  totalInteractions: number;
+  preferenceChanges: number;
+  engagementScore: number;
+  lastActive: Date;
+  avgSessionDuration: number;
+  topCategories: string[];
+  trendingPreferences: string[];
+}
+
+export interface PreferenceExtractionRequest {
+  userId: string;
+  conversationText: string;
+  sessionId?: string;
+  conversationId?: string;
+  extractionOptions?: {
+    categories?: string[];
+    confidenceThreshold?: number;
+    maxPreferences?: number;
+    extractImplicit?: boolean;
+  };
+}
+
+export interface PreferenceExtractionResult {
+  userId: string;
+  extractedPreferences: UserPreference[];
+  confidence: number;
+  processingTime: number;
+  llmModel: string;
+  metadata?: {
+    totalTokens?: number;
+    promptTokens?: number;
+    completionTokens?: number;
+    reasoning?: string;
+  };
+}
+
+export interface PersonalizedQueryRequest {
+  userId: string;
+  query: string;
+  namespace?: string;
+  includePreferences?: boolean;
+  preferenceWeight?: number; // 0-1 scale for preference influence
+  contextOptions?: {
+    includeProfile?: boolean;
+    includeBehavior?: boolean;
+    includeAnalytics?: boolean;
+  };
+}
+
+export interface PersonalizedQueryResult extends QueryResult {
+  personalization: {
+    preferencesApplied: UserPreference[];
+    profileDataUsed: boolean;
+    personalizationScore: number;
+    reasoning?: string;
+  };
+}
+
+export interface PreferenceAnalyticsQuery {
+  userId?: string;
+  category?: string;
+  timeRange?: {
+    start: Date;
+    end: Date;
+  };
+  type?: 'explicit' | 'implicit' | 'inferred';
+  source?: 'conversation' | 'behavior' | 'profile' | 'manual';
+  aggregation?: 'daily' | 'weekly' | 'monthly';
+}
+
+export interface PreferenceAnalyticsResult {
+  query: PreferenceAnalyticsQuery;
+  results: {
+    totalPreferences: number;
+    byCategory: Record<string, number>;
+    byType: Record<string, number>;
+    bySource: Record<string, number>;
+    confidenceDistribution: {
+      high: number; // >0.8
+      medium: number; // 0.5-0.8
+      low: number; // <0.5
+    };
+    trendingCategories: Array<{
+      category: string;
+      count: number;
+      trend: 'up' | 'down' | 'stable';
+    }>;
+    timeline?: Array<{
+      date: string;
+      count: number;
+    }>;
+  };
+  generatedAt: Date;
+}
+
+// Enhanced Configuration Types for v1.3.0
+export interface PreferenceTrackingConfig {
+  enabled: boolean;
+  extractionModel: 'openai' | 'gemini' | 'custom';
+  extractionConfig: {
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    confidenceThreshold?: number;
+    extractImplicit?: boolean;
+    categories?: string[];
+  };
+  storage: {
+    retentionDays: number;
+    anonymizeAfterDays?: number;
+    compressionEnabled?: boolean;
+  };
+  privacy: {
+    requireConsent: boolean;
+    allowOptOut: boolean;
+    encryptPreferences: boolean;
+    auditTrail: boolean;
+  };
+  analytics: {
+    enabled: boolean;
+    aggregationLevel: 'user' | 'segment' | 'global';
+    includePersonalData: boolean;
+  };
+}
+
+// Extended ContragConfig for v1.3.0 (backward compatible)
+export interface ContragConfigV13 extends ContragConfig {
+  // All existing v1.2.0 config options remain the same
+  // New v1.3.0 optional preference tracking configuration
+  preferenceTracking?: PreferenceTrackingConfig;
+  
+  // Enhanced context builder for personalized content
+  contextBuilder?: {
+    chunkSize?: number;
+    overlap?: number;
+    maxDepth?: number;
+    relationshipLimit?: number;
+    // New v1.3.0 personalization options
+    enablePersonalization?: boolean;
+    personalizedChunking?: boolean;
+    preferenceWeight?: number;
+    includeUserContext?: boolean;
+  };
+}
+
+// Plugin interfaces extended for preference support (optional methods for backward compatibility)
+export interface PreferenceCapableDBPlugin extends DBPlugin {
+  // Optional preference storage methods
+  storeUserPreferences?(preferences: UserPreference[]): Promise<void>;
+  getUserPreferences?(userId: string, filters?: Partial<UserPreference>): Promise<UserPreference[]>;
+  updateUserProfile?(profile: UserProfile): Promise<void>;
+  getUserProfile?(userId: string): Promise<UserProfile | null>;
+  deleteUserData?(userId: string): Promise<void>;
+  
+  // Optional analytics methods
+  getPreferenceAnalytics?(query: PreferenceAnalyticsQuery): Promise<PreferenceAnalyticsResult>;
+  getUserSegments?(userId: string): Promise<string[]>;
+  updateBehaviorPatterns?(userId: string, patterns: BehaviorPattern[]): Promise<void>;
+}
+
+export interface PreferenceCapableEmbedderPlugin extends EmbedderPlugin {
+  // Optional preference extraction methods
+  extractPreferences?(request: PreferenceExtractionRequest): Promise<PreferenceExtractionResult>;
+  generatePersonalizedPrompt?(query: string, preferences: UserPreference[]): Promise<string>;
+  analyzeConversation?(text: string, options?: Record<string, any>): Promise<Record<string, any>>;
+}
+
+// Preference extraction engine interface
+export interface PreferenceExtractor {
+  name: string;
+  configure(config: Record<string, any>): Promise<void>;
+  extractFromConversation(request: PreferenceExtractionRequest): Promise<PreferenceExtractionResult>;
+  analyzeUserBehavior(userId: string, interactions: any[]): Promise<BehaviorPattern[]>;
+  generatePersonalizedContext(userId: string, query: string): Promise<string>;
+  testConnection?(): Promise<ConnectionTestResult>;
+}

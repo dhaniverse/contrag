@@ -1602,4 +1602,377 @@ function validateConfigurationSchema(config: any): string[] {
   return issues;
 }
 
+// V1.3.0 Preference Tracking Commands
+const prefsCmd = program
+  .command('preferences')
+  .alias('prefs')
+  .description('Manage user preferences and personalization (v1.3.0)');
+
+prefsCmd
+  .command('extract')
+  .description('Extract preferences from conversation text')
+  .requiredOption('-u, --user-id <userId>', 'User ID')
+  .requiredOption('-t, --text <text>', 'Conversation text to analyze')
+  .option('--session-id <sessionId>', 'Session ID for tracking')
+  .option('--conversation-id <conversationId>', 'Conversation ID for tracking')
+  .option('--categories <categories>', 'Comma-separated list of categories to focus on')
+  .option('--confidence-threshold <threshold>', 'Minimum confidence threshold (0-1)', '0.7')
+  .option('--max-preferences <max>', 'Maximum number of preferences to extract', '10')
+  .action(async (options) => {
+    const spinner = ora('Extracting preferences from conversation...').start();
+    
+    try {
+      const config = loadConfig();
+      const sdk = new ContragSDK(config);
+      
+      const categories = options.categories ? options.categories.split(',').map((s: string) => s.trim()) : undefined;
+      
+      const extractionOptions = {
+        categories,
+        confidenceThreshold: parseFloat(options.confidenceThreshold),
+        maxPreferences: parseInt(options.maxPreferences),
+        extractImplicit: true
+      };
+
+      const result = await (sdk as any).extractPreferences({
+        userId: options.userId,
+        conversationText: options.text,
+        sessionId: options.sessionId,
+        conversationId: options.conversationId,
+        extractionOptions
+      });
+
+      spinner.succeed('Preferences extracted successfully!');
+      
+      console.log(`\nExtracted ${result.extractedPreferences.length} preferences:`);
+      console.log(`Overall confidence: ${Math.round(result.confidence * 100)}%`);
+      console.log(`Processing time: ${result.processingTime}ms`);
+      console.log(`LLM Model: ${result.llmModel}`);
+      
+      if (result.extractedPreferences.length > 0) {
+        console.log('\nPreferences:');
+        result.extractedPreferences.forEach((pref: any, index: number) => {
+          const confidenceBar = '█'.repeat(Math.round(pref.confidence * 10));
+          console.log(`\n${index + 1}. ${chalk.cyan(pref.category)} - ${chalk.yellow(pref.type)}`);
+          console.log(`   Value: ${chalk.green(JSON.stringify(pref.value))}`);
+          console.log(`   Confidence: ${chalk.blue(confidenceBar)} ${Math.round(pref.confidence * 100)}%`);
+          console.log(`   Source: ${pref.source}`);
+          if (pref.context?.reasoning) {
+            console.log(`   Reasoning: ${chalk.gray(pref.context.reasoning)}`);
+          }
+        });
+      }
+      
+      await sdk.disconnect();
+    } catch (error) {
+      spinner.fail(`Preference extraction failed: ${error}`);
+      process.exit(1);
+    }
+  });
+
+prefsCmd
+  .command('profile')
+  .description('View or manage user profile')
+  .requiredOption('-u, --user-id <userId>', 'User ID')
+  .option('--create', 'Create new profile if it doesn\'t exist')
+  .option('--analytics', 'Show detailed analytics')
+  .action(async (options) => {
+    const spinner = ora('Retrieving user profile...').start();
+    
+    try {
+      const config = loadConfig();
+      const sdk = new ContragSDK(config);
+      
+      let profile = await (sdk as any).getUserProfile(options.userId);
+      
+      if (!profile && options.create) {
+        spinner.text = 'Creating new user profile...';
+        profile = await (sdk as any).createUserProfile(options.userId);
+      }
+      
+      if (!profile) {
+        spinner.fail('User profile not found. Use --create to create a new profile.');
+        return;
+      }
+      
+      spinner.succeed('Profile retrieved successfully!');
+      
+      console.log(`\n${chalk.bold('User Profile:')} ${options.userId}`);
+      console.log(`Created: ${profile.createdAt.toLocaleString()}`);
+      console.log(`Last Updated: ${profile.lastUpdated.toLocaleString()}`);
+      console.log(`Preferences: ${profile.preferences.length}`);
+      console.log(`Segments: ${profile.segments.join(', ') || 'None'}`);
+      console.log(`Engagement Score: ${profile.analytics.engagementScore}/100`);
+      
+      if (profile.analytics.topCategories.length > 0) {
+        console.log(`\nTop Categories: ${profile.analytics.topCategories.join(', ')}`);
+      }
+      
+      if (profile.behaviorPatterns.length > 0) {
+        console.log('\nBehavior Patterns:');
+        profile.behaviorPatterns.slice(0, 3).forEach((pattern: any) => {
+          const confidenceBar = '█'.repeat(Math.round(pattern.confidence * 10));
+          console.log(`  • ${pattern.type}: ${confidenceBar} ${Math.round(pattern.confidence * 100)}%`);
+        });
+      }
+      
+      if (options.analytics) {
+        console.log(`\n${chalk.bold('Detailed Analytics:')}`);
+        console.log(`Total Interactions: ${profile.analytics.totalInteractions}`);
+        console.log(`Preference Changes: ${profile.analytics.preferenceChanges}`);
+        console.log(`Avg Session Duration: ${profile.analytics.avgSessionDuration}min`);
+        console.log(`Last Active: ${profile.analytics.lastActive.toLocaleString()}`);
+        
+        if (profile.analytics.trendingPreferences.length > 0) {
+          console.log(`Trending: ${profile.analytics.trendingPreferences.join(', ')}`);
+        }
+      }
+      
+      await sdk.disconnect();
+    } catch (error) {
+      spinner.fail(`Profile retrieval failed: ${error}`);
+      process.exit(1);
+    }
+  });
+
+prefsCmd
+  .command('list')
+  .description('List user preferences with filters')
+  .requiredOption('-u, --user-id <userId>', 'User ID')
+  .option('--category <category>', 'Filter by category')
+  .option('--type <type>', 'Filter by type (explicit, implicit, inferred)')
+  .option('--source <source>', 'Filter by source (conversation, behavior, profile, manual)')
+  .option('--min-confidence <confidence>', 'Minimum confidence threshold', '0')
+  .option('--limit <limit>', 'Limit number of results', '20')
+  .action(async (options) => {
+    const spinner = ora('Retrieving user preferences...').start();
+    
+    try {
+      const config = loadConfig();
+      const sdk = new ContragSDK(config);
+      
+      const filters: any = {};
+      if (options.category) filters.category = options.category;
+      if (options.type) filters.type = options.type;
+      if (options.source) filters.source = options.source;
+      
+      const preferences = await (sdk as any).getUserPreferences(options.userId, filters);
+      
+      // Filter by confidence if specified
+      const minConfidence = parseFloat(options.minConfidence);
+      const filteredPreferences = preferences
+        .filter((p: any) => p.confidence >= minConfidence)
+        .slice(0, parseInt(options.limit));
+      
+      spinner.succeed(`Retrieved ${filteredPreferences.length} preferences`);
+      
+      if (filteredPreferences.length === 0) {
+        console.log('No preferences found matching the criteria.');
+        return;
+      }
+      
+      console.log(`\n${chalk.bold('User Preferences:')} ${options.userId}`);
+      
+      filteredPreferences.forEach((pref: any, index: number) => {
+        const confidenceBar = '█'.repeat(Math.round(pref.confidence * 10));
+        const age = Math.round((Date.now() - new Date(pref.extractedAt).getTime()) / (1000 * 60 * 60 * 24));
+        
+        console.log(`\n${index + 1}. ${chalk.cyan(pref.category)} - ${chalk.yellow(pref.type)}`);
+        console.log(`   Value: ${chalk.green(JSON.stringify(pref.value))}`);
+        console.log(`   Confidence: ${chalk.blue(confidenceBar)} ${Math.round(pref.confidence * 100)}%`);
+        console.log(`   Source: ${pref.source} | Age: ${age} days`);
+        console.log(`   Last Updated: ${new Date(pref.lastUpdated).toLocaleString()}`);
+      });
+      
+      await sdk.disconnect();
+    } catch (error) {
+      spinner.fail(`Preference retrieval failed: ${error}`);
+      process.exit(1);
+    }
+  });
+
+prefsCmd
+  .command('analytics')
+  .description('Generate preference analytics and insights')
+  .option('-u, --user-id <userId>', 'Specific user ID (omit for system-wide analytics)')
+  .option('--category <category>', 'Filter by category')
+  .option('--type <type>', 'Filter by type (explicit, implicit, inferred)')
+  .option('--source <source>', 'Filter by source (conversation, behavior, profile, manual)')
+  .option('--days <days>', 'Number of days to analyze', '30')
+  .option('--aggregation <agg>', 'Aggregation level (daily, weekly, monthly)', 'daily')
+  .action(async (options) => {
+    const spinner = ora('Generating preference analytics...').start();
+    
+    try {
+      const config = loadConfig();
+      const sdk = new ContragSDK(config);
+      
+      const days = parseInt(options.days);
+      const endDate = new Date();
+      const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+      
+      const query: any = {
+        timeRange: { start: startDate, end: endDate },
+        aggregation: options.aggregation
+      };
+      
+      if (options.userId) query.userId = options.userId;
+      if (options.category) query.category = options.category;
+      if (options.type) query.type = options.type;
+      if (options.source) query.source = options.source;
+      
+      const analytics = await (sdk as any).getPreferenceAnalytics(query);
+      
+      spinner.succeed('Analytics generated successfully!');
+      
+      console.log(`\n${chalk.bold('Preference Analytics')} ${options.userId ? `for ${options.userId}` : '(System-wide)'}`);
+      console.log(`Period: ${startDate.toDateString()} - ${endDate.toDateString()}`);
+      console.log(`Total Preferences: ${analytics.results.totalPreferences}`);
+      
+      // Category breakdown
+      if (Object.keys(analytics.results.byCategory).length > 0) {
+        console.log(`\n${chalk.bold('By Category:')}`);
+        const sortedCategories = Object.entries(analytics.results.byCategory)
+          .sort(([,a], [,b]) => (b as number) - (a as number));
+        
+        sortedCategories.forEach(([category, count]) => {
+          const percentage = Math.round(((count as number) / analytics.results.totalPreferences) * 100);
+          const bar = '█'.repeat(Math.round(percentage / 5));
+          console.log(`  ${category.padEnd(15)} ${bar} ${count} (${percentage}%)`);
+        });
+      }
+      
+      // Type breakdown  
+      if (Object.keys(analytics.results.byType).length > 0) {
+        console.log(`\n${chalk.bold('By Type:')}`);
+        Object.entries(analytics.results.byType).forEach(([type, count]) => {
+          console.log(`  ${type}: ${count}`);
+        });
+      }
+      
+      // Confidence distribution
+      const { high, medium, low } = analytics.results.confidenceDistribution;
+      if (high + medium + low > 0) {
+        console.log(`\n${chalk.bold('Confidence Distribution:')}`);
+        console.log(`  High (>0.8):   ${chalk.green('█'.repeat(Math.round(high / 5)))} ${high}`);
+        console.log(`  Medium (0.5-0.8): ${chalk.yellow('█'.repeat(Math.round(medium / 5)))} ${medium}`);
+        console.log(`  Low (<0.5):    ${chalk.red('█'.repeat(Math.round(low / 5)))} ${low}`);
+      }
+      
+      // Trending categories
+      if (analytics.results.trendingCategories && analytics.results.trendingCategories.length > 0) {
+        console.log(`\n${chalk.bold('Trending Categories:')}`);
+        analytics.results.trendingCategories.forEach((trend: any) => {
+          const trendIcon = trend.trend === 'up' ? '↗️' : trend.trend === 'down' ? '↘️' : '→';
+          console.log(`  ${trendIcon} ${trend.category}: ${trend.count}`);
+        });
+      }
+      
+      await sdk.disconnect();
+    } catch (error) {
+      spinner.fail(`Analytics generation failed: ${error}`);
+      process.exit(1);
+    }
+  });
+
+prefsCmd
+  .command('personalize')
+  .description('Generate personalized query with user context')
+  .requiredOption('-u, --user-id <userId>', 'User ID')
+  .requiredOption('-q, --query <query>', 'Query to personalize')
+  .option('--namespace <namespace>', 'Specific namespace to search')
+  .option('--preference-weight <weight>', 'Weight of preferences in results (0-1)', '0.7')
+  .option('--include-profile', 'Include user profile data in context')
+  .action(async (options) => {
+    const spinner = ora('Generating personalized response...').start();
+    
+    try {
+      const config = loadConfig();
+      const sdk = new ContragSDK(config);
+      
+      const personalizedQuery = {
+        userId: options.userId,
+        query: options.query,
+        namespace: options.namespace,
+        includePreferences: true,
+        preferenceWeight: parseFloat(options.preferenceWeight),
+        contextOptions: {
+          includeProfile: options.includeProfile,
+          includeBehavior: true,
+          includeAnalytics: false
+        }
+      };
+      
+      const result = await (sdk as any).personalizedQuery(personalizedQuery);
+      
+      spinner.succeed('Personalized response generated!');
+      
+      console.log(`\n${chalk.bold('Original Query:')} ${options.query}`);
+      console.log(`${chalk.bold('User:')} ${options.userId}`);
+      
+      if (result.personalization.preferencesApplied.length > 0) {
+        console.log(`\n${chalk.bold('Applied Preferences:')}`);
+        result.personalization.preferencesApplied.forEach((pref: any) => {
+          console.log(`  • ${pref.category}: ${JSON.stringify(pref.value)} (${Math.round(pref.confidence * 100)}%)`);
+        });
+      }
+      
+      console.log(`\n${chalk.bold('Personalization Score:')} ${Math.round(result.personalization.personalizationScore * 100)}%`);
+      
+      if (result.chunks && result.chunks.length > 0) {
+        console.log(`\n${chalk.bold('Context Results:')} ${result.chunks.length} chunks found`);
+        
+        result.chunks.slice(0, 3).forEach((chunk: any, index: number) => {
+          console.log(`\n${index + 1}. ${chalk.cyan(chunk.metadata.entity)}:${chunk.metadata.uid}`);
+          console.log(`   ${chunk.content.substring(0, 150)}...`);
+        });
+      }
+      
+      if (result.personalization.reasoning) {
+        console.log(`\n${chalk.bold('Reasoning:')}`);
+        console.log(`${chalk.gray(result.personalization.reasoning)}`);
+      }
+      
+      await sdk.disconnect();
+    } catch (error) {
+      spinner.fail(`Personalization failed: ${error}`);
+      process.exit(1);
+    }
+  });
+
+prefsCmd
+  .command('delete')
+  .description('Delete all user data and preferences (GDPR compliance)')
+  .requiredOption('-u, --user-id <userId>', 'User ID')
+  .option('--confirm', 'Confirm deletion without prompt')
+  .action(async (options) => {
+    if (!options.confirm) {
+      console.log(chalk.yellow(`⚠️  This will permanently delete ALL data for user: ${options.userId}`));
+      console.log('This includes:');
+      console.log('  • All preferences');
+      console.log('  • User profile');
+      console.log('  • Behavior patterns');
+      console.log('  • Analytics data');
+      console.log('\nThis action cannot be undone.');
+      console.log(chalk.red('Add --confirm flag to proceed with deletion.'));
+      return;
+    }
+    
+    const spinner = ora(`Deleting all data for user ${options.userId}...`).start();
+    
+    try {
+      const config = loadConfig();
+      const sdk = new ContragSDK(config);
+      
+      await (sdk as any).deleteUserData(options.userId);
+      
+      spinner.succeed(`All data for user ${options.userId} has been permanently deleted`);
+      
+      await sdk.disconnect();
+    } catch (error) {
+      spinner.fail(`Data deletion failed: ${error}`);
+      process.exit(1);
+    }
+  });
+
 program.parse(process.argv);

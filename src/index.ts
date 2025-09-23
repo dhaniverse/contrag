@@ -15,10 +15,26 @@ import {
   VectorSearchResult,
   CompatibilityTestResult,
   DimensionCompatibilityResult,
-  ComprehensiveCompatibilityResult
+  ComprehensiveCompatibilityResult,
+  // V1.3.0 Preference Types
+  ContragConfigV13,
+  UserPreference,
+  UserProfile,
+  PreferenceExtractionRequest,
+  PreferenceExtractionResult,
+  PersonalizedQueryRequest,
+  PersonalizedQueryResult,
+  PreferenceAnalyticsQuery,
+  PreferenceAnalyticsResult,
+  PreferenceCapableDBPlugin,
+  PreferenceCapableEmbedderPlugin,
+  PreferenceExtractor
 } from './types';
 import { ContextBuilder } from './context-builder';
 import { CompatibilityTester } from './compatibility';
+import { UserProfileBuilder } from './user-profile-builder';
+import { PreferenceAnalyticsEngine } from './analytics-engine';
+import { LLMPreferenceExtractor } from './plugins/preference-extractor';
 import { PostgresPlugin } from './plugins/postgres';
 import { MongoPlugin } from './plugins/mongodb';
 import { OpenAIEmbedderPlugin } from './plugins/openai-embedder';
@@ -32,9 +48,14 @@ export class ContragSDK {
   private vectorStorePlugin: VectorStorePlugin | null = null;
   private embedderPlugin: EmbedderPlugin | null = null;
   private contextBuilder: ContextBuilder;
-  private config: ContragConfig | null = null;
+  private config: ContragConfig | ContragConfigV13 | null = null;
+  
+  // V1.3.0 Preference Tracking Components (optional)
+  private preferenceExtractor: PreferenceExtractor | null = null;
+  private profileBuilder: UserProfileBuilder | null = null;
+  private analyticsEngine: PreferenceAnalyticsEngine | null = null;
 
-  constructor(config?: ContragConfig) {
+  constructor(config?: ContragConfig | ContragConfigV13) {
     this.contextBuilder = new ContextBuilder(config?.contextBuilder);
     if (config) {
       this.configure(config);
@@ -44,7 +65,7 @@ export class ContragSDK {
   /**
    * Configure the SDK with plugins
    */
-  async configure(config: ContragConfig): Promise<void> {
+  async configure(config: ContragConfig | ContragConfigV13): Promise<void> {
     this.config = config;
 
     // Initialize database plugin
@@ -87,6 +108,40 @@ export class ContragSDK {
     await this.dbPlugin.connect(config.database.config);
     await this.vectorStorePlugin.connect(config.vectorStore.config);
     await this.embedderPlugin.configure(config.embedder.config);
+
+    // V1.3.0: Initialize preference tracking components if enabled
+    const v13Config = config as ContragConfigV13;
+    if (v13Config.preferenceTracking?.enabled) {
+      await this.initializePreferenceTracking(v13Config);
+    }
+  }
+
+  /**
+   * V1.3.0: Initialize preference tracking components
+   */
+  private async initializePreferenceTracking(config: ContragConfigV13): Promise<void> {
+    // Initialize preference extractor
+    this.preferenceExtractor = new LLMPreferenceExtractor();
+    await this.preferenceExtractor.configure({
+      embedderPlugin: this.embedderPlugin,
+      ...config.preferenceTracking?.extractionConfig
+    });
+
+    // Initialize profile builder
+    if (this.dbPlugin && 'storeUserPreferences' in this.dbPlugin) {
+      this.profileBuilder = new UserProfileBuilder(
+        this.dbPlugin as PreferenceCapableDBPlugin,
+        config.preferenceTracking
+      );
+    }
+
+    // Initialize analytics engine
+    if (this.dbPlugin && 'getPreferenceAnalytics' in this.dbPlugin) {
+      this.analyticsEngine = new PreferenceAnalyticsEngine(
+        this.dbPlugin as PreferenceCapableDBPlugin,
+        config.preferenceTracking?.analytics
+      );
+    }
   }
 
   /**
@@ -577,8 +632,298 @@ export class ContragSDK {
   /**
    * Get current configuration
    */
-  getConfig(): ContragConfig | null {
+  getConfig(): ContragConfig | ContragConfigV13 | null {
     return this.config;
+  }
+
+  // ========================================
+  // V1.3.0 PREFERENCE TRACKING METHODS
+  // ========================================
+
+  /**
+   * Extract preferences from conversation text
+   */
+  async extractPreferences(request: PreferenceExtractionRequest): Promise<PreferenceExtractionResult> {
+    if (!this.preferenceExtractor) {
+      throw new Error('Preference tracking is not enabled. Enable it in configuration.');
+    }
+
+    const result = await this.preferenceExtractor.extractFromConversation(request);
+
+    // Store extracted preferences if profile builder is available
+    if (this.profileBuilder && result.extractedPreferences.length > 0) {
+      await this.profileBuilder.updateProfileWithPreferences(
+        request.userId,
+        result.extractedPreferences
+      );
+    }
+
+    return result;
+  }
+
+  /**
+   * Get or create user profile
+   */
+  async getUserProfile(userId: string): Promise<UserProfile | null> {
+    if (!this.profileBuilder) {
+      throw new Error('Preference tracking is not enabled. Enable it in configuration.');
+    }
+
+    return this.profileBuilder.getOrCreateProfile(userId);
+  }
+
+  /**
+   * Create new user profile
+   */
+  async createUserProfile(userId: string, initialPreferences?: UserPreference[]): Promise<UserProfile> {
+    if (!this.profileBuilder) {
+      throw new Error('Preference tracking is not enabled. Enable it in configuration.');
+    }
+
+    return this.profileBuilder.createUserProfile(userId, initialPreferences);
+  }
+
+  /**
+   * Update user profile with new preferences
+   */
+  async updateUserProfile(userId: string, newPreferences: UserPreference[]): Promise<UserProfile> {
+    if (!this.profileBuilder) {
+      throw new Error('Preference tracking is not enabled. Enable it in configuration.');
+    }
+
+    return this.profileBuilder.updateProfileWithPreferences(userId, newPreferences);
+  }
+
+  /**
+   * Get user preferences with optional filters
+   */
+  async getUserPreferences(userId: string, filters?: Partial<UserPreference>): Promise<UserPreference[]> {
+    if (!this.dbPlugin || !('getUserPreferences' in this.dbPlugin)) {
+      throw new Error('Database plugin does not support preference storage.');
+    }
+
+    return (this.dbPlugin as PreferenceCapableDBPlugin).getUserPreferences!(userId, filters);
+  }
+
+  /**
+   * Store user preferences directly
+   */
+  async storeUserPreferences(preferences: UserPreference[]): Promise<void> {
+    if (!this.dbPlugin || !('storeUserPreferences' in this.dbPlugin)) {
+      throw new Error('Database plugin does not support preference storage.');
+    }
+
+    await (this.dbPlugin as PreferenceCapableDBPlugin).storeUserPreferences!(preferences);
+  }
+
+  /**
+   * Delete all user data for GDPR compliance
+   */
+  async deleteUserData(userId: string): Promise<void> {
+    if (!this.dbPlugin || !('deleteUserData' in this.dbPlugin)) {
+      throw new Error('Database plugin does not support user data deletion.');
+    }
+
+    await (this.dbPlugin as PreferenceCapableDBPlugin).deleteUserData!(userId);
+  }
+
+  /**
+   * Generate personalized query using user preferences
+   */
+  async personalizedQuery(request: PersonalizedQueryRequest): Promise<PersonalizedQueryResult> {
+    if (!this.profileBuilder) {
+      throw new Error('Preference tracking is not enabled. Enable it in configuration.');
+    }
+
+    // Get personalized context
+    const personalizedContext = await this.profileBuilder.getPersonalizedContext(
+      request.userId,
+      request.query
+    );
+
+    // Execute the query with enhanced context
+    const queryResult = await this.query(
+      request.namespace || `${request.userId}:context`,
+      personalizedContext.enhancedQuery,
+      5
+    );
+
+    // Build personalized response
+    const personalizedResult: PersonalizedQueryResult = {
+      ...queryResult,
+      personalization: {
+        preferencesApplied: personalizedContext.relevantPreferences,
+        profileDataUsed: request.contextOptions?.includeProfile || false,
+        personalizationScore: this.calculatePersonalizationScore(
+          personalizedContext.relevantPreferences,
+          queryResult.chunks
+        ),
+        reasoning: `Applied ${personalizedContext.relevantPreferences.length} user preferences to enhance query context.`
+      }
+    };
+
+    return personalizedResult;
+  }
+
+  /**
+   * Generate preference analytics
+   */
+  async getPreferenceAnalytics(query: PreferenceAnalyticsQuery): Promise<PreferenceAnalyticsResult> {
+    if (!this.analyticsEngine) {
+      throw new Error('Preference analytics is not enabled. Enable it in configuration.');
+    }
+
+    return this.analyticsEngine.generateAnalytics(query);
+  }
+
+  /**
+   * Analyze user engagement patterns
+   */
+  async analyzeUserEngagement(userId?: string): Promise<{
+    engagementScore: number;
+    activityLevel: 'low' | 'medium' | 'high';
+    preferenceEvolution: Array<{
+      date: string;
+      categories: string[];
+      confidence: number;
+    }>;
+    recommendations: string[];
+  }> {
+    if (!this.analyticsEngine) {
+      throw new Error('Preference analytics is not enabled. Enable it in configuration.');
+    }
+
+    return this.analyticsEngine.analyzeUserEngagement(userId);
+  }
+
+  /**
+   * Generate personalization insights for a user
+   */
+  async generatePersonalizationInsights(userId: string): Promise<{
+    personalizedCategories: Array<{
+      category: string;
+      strength: number;
+      trending: boolean;
+    }>;
+    behaviorInsights: Array<{
+      type: string;
+      description: string;
+      confidence: number;
+    }>;
+    contentRecommendations: Array<{
+      type: string;
+      reason: string;
+      priority: number;
+    }>;
+  }> {
+    if (!this.analyticsEngine) {
+      throw new Error('Preference analytics is not enabled. Enable it in configuration.');
+    }
+
+    return this.analyticsEngine.generatePersonalizationInsights(userId);
+  }
+
+  /**
+   * Analyze preference quality and reliability
+   */
+  async analyzePreferenceQuality(userId?: string): Promise<{
+    overallQuality: number;
+    qualityByCategory: Record<string, number>;
+    reliabilityScore: number;
+    consistencyScore: number;
+    recommendations: string[];
+  }> {
+    if (!this.analyticsEngine) {
+      throw new Error('Preference analytics is not enabled. Enable it in configuration.');
+    }
+
+    return this.analyticsEngine.analyzePreferenceQuality(userId);
+  }
+
+  /**
+   * Generate real-time preference insights
+   */
+  async generateRealTimeInsights(userId: string, timeWindowMinutes: number = 60): Promise<{
+    recentActivity: {
+      newPreferences: number;
+      updatedPreferences: number;
+      categoriesActive: string[];
+    };
+    behaviorChanges: Array<{
+      type: string;
+      change: 'increased' | 'decreased' | 'new';
+      significance: number;
+    }>;
+    alerts: Array<{
+      type: 'trend_change' | 'new_interest' | 'behavior_shift';
+      message: string;
+      priority: 'low' | 'medium' | 'high';
+    }>;
+  }> {
+    if (!this.analyticsEngine) {
+      throw new Error('Preference analytics is not enabled. Enable it in configuration.');
+    }
+
+    return this.analyticsEngine.generateRealTimeInsights(userId, timeWindowMinutes);
+  }
+
+  /**
+   * Check if preference tracking is enabled
+   */
+  isPreferenceTrackingEnabled(): boolean {
+    const v13Config = this.config as ContragConfigV13;
+    return v13Config?.preferenceTracking?.enabled || false;
+  }
+
+  /**
+   * Test preference extractor connection
+   */
+  async testPreferenceExtractorConnection(): Promise<ConnectionTestResult> {
+    if (!this.preferenceExtractor) {
+      return {
+        plugin: 'Preference Extractor',
+        connected: false,
+        error: 'Preference tracking not enabled'
+      };
+    }
+
+    if (this.preferenceExtractor.testConnection) {
+      return await this.preferenceExtractor.testConnection();
+    }
+
+    return {
+      plugin: 'Preference Extractor',
+      connected: true,
+      details: { method: 'no-test-available' }
+    };
+  }
+
+  /**
+   * Calculate personalization score based on preferences and results
+   */
+  private calculatePersonalizationScore(preferences: UserPreference[], chunks: ContextChunk[]): number {
+    if (preferences.length === 0 || chunks.length === 0) {
+      return 0;
+    }
+
+    let score = 0;
+    const totalPreferences = preferences.length;
+
+    preferences.forEach(pref => {
+      const prefValue = String(pref.value).toLowerCase();
+      const category = pref.category.toLowerCase();
+
+      const relevantChunks = chunks.filter(chunk => {
+        const content = chunk.content.toLowerCase();
+        return content.includes(prefValue) || content.includes(category);
+      });
+
+      if (relevantChunks.length > 0) {
+        score += pref.confidence * (relevantChunks.length / chunks.length);
+      }
+    });
+
+    return Math.min(score / totalPreferences, 1.0);
   }
 }
 
@@ -586,6 +931,11 @@ export class ContragSDK {
 export * from './types';
 export { ContextBuilder } from './context-builder';
 export { CompatibilityTester } from './compatibility';
+
+// V1.3.0 exports
+export { UserProfileBuilder } from './user-profile-builder';
+export { PreferenceAnalyticsEngine } from './analytics-engine';
+export { LLMPreferenceExtractor } from './plugins/preference-extractor';
 
 // Export plugins
 export { PostgresPlugin } from './plugins/postgres';
