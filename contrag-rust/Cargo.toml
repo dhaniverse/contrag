@@ -1,0 +1,35 @@
+[workspace]
+members = [
+    "contrag-core",
+    "examples/user-canister"
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["ContRAG Contributors"]
+license = "MIT"
+repository = "https://github.com/dhaniverse/contrag"
+
+[workspace.dependencies]
+# ICP Dependencies
+ic-cdk = "0.13"
+ic-cdk-macros = "0.13"
+candid = "0.10"
+ic-stable-structures = "0.6"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Async runtime (limited for ICP)
+futures = "0.3"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Utilities
+base64 = "0.22"
+hex = "0.4"
