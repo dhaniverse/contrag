@@ -1,0 +1,49 @@
+{
+  "entities": [
+    {
+      "name": "User",
+      "canister_id": "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      "fetch_method": "get_user",
+      "fetch_many_method": "list_users",
+      "relationships": [
+        {
+          "field_name": "order_ids",
+          "target_entity": "Order",
+          "relationship_type": "one_to_many"
+        }
+      ],
+      "auto_include": true
+    },
+    {
+      "name": "Order",
+      "canister_id": "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      "fetch_method": "get_order",
+      "fetch_many_method": null,
+      "relationships": [
+        {
+          "field_name": "user_id",
+          "target_entity": "User",
+          "relationship_type": "many_to_one"
+        }
+      ],
+      "auto_include": true
+    }
+  ],
+  "embedder": {
+    "provider": "openai",
+    "model": "text-embedding-3-small",
+    "dimensions": 1536,
+    "api_endpoint": null
+  },
+  "chunking": {
+    "chunk_size": 1000,
+    "overlap": 100,
+    "include_field_names": true
+  },
+  "vector_store": {
+    "storage_type": "stable_memory",
+    "max_hot_vectors": 10000,
+    "enable_cache": true
+  },
+  "system_prompt": "You are analyzing user data for personalized recommendations."
+}
