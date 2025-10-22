@@ -1,7 +1,7 @@
 pub mod stable_memory_store;
 
 use crate::error::Result;
-use crate::types::{Vector, SearchResult, VectorMetadata};
+use crate::types::{Vector, SearchResult};
 
 /// Trait for vector storage backends
 #[async_trait::async_trait]

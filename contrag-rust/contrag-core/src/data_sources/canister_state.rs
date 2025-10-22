@@ -1,4 +1,4 @@
-use candid::{CandidType, Principal, encode_one, decode_one};
+use candid::{CandidType, Principal, encode_one};
 use crate::data_sources::DataSource;
 use crate::entity::RagEntity;
 use crate::error::{ContragError, Result};

@@ -146,7 +146,7 @@ fn post_upgrade() {
 // ============================================================================
 
 #[update]
-fn set_config(config_json: String) -> Result<String, String> {
+fn set_config(config_json: String) -> std::result::Result<String, String> {
     let config = contrag_core::config::load_config_from_json(&config_json)
         .map_err(|e| format!("Failed to load config: {}", e))?;
     
@@ -210,7 +210,7 @@ fn get_order(order_id: String) -> Option<Order> {
 // ============================================================================
 
 #[update]
-async fn build_user_rag_context(user_id: String) -> Result<String, String> {
+async fn build_user_rag_context(user_id: String) -> std::result::Result<String, String> {
     // Get configuration
     let config = CONFIG.with(|c| {
         c.borrow()
@@ -299,7 +299,7 @@ async fn build_user_rag_context(user_id: String) -> Result<String, String> {
 }
 
 #[update]
-async fn search_user_context(user_id: String, query: String, k: u32) -> Result<Vec<SearchResult>, String> {
+async fn search_user_context(user_id: String, query: String, k: u32) -> std::result::Result<Vec<SearchResult>, String> {
     let config = CONFIG.with(|c| {
         c.borrow()
             .clone()
@@ -334,7 +334,7 @@ async fn search_user_context(user_id: String, query: String, k: u32) -> Result<V
 }
 
 #[query]
-fn get_rag_stats(user_id: String) -> Result<String, String> {
+fn get_rag_stats(user_id: String) -> std::result::Result<String, String> {
     let namespace = format!("User:{}", user_id);
     
     VECTOR_STORE.with(|store| {

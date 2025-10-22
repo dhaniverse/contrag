@@ -6,6 +6,11 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "ContRAG - Advanced RAG library for ICP canisters with on-chain storage"
+readme = "../README.md"
+keywords = ["icp", "rag", "llm", "embeddings", "web3"]
+categories = ["web-programming", "wasm", "api-bindings"]
+homepage = "https://github.com/dhaniverse/contrag"
+documentation = "https://github.com/dhaniverse/contrag/tree/main/contrag-rust"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::embedders::{Embedder, http_client::{HttpClient, HttpOutcallResponse}};
+use crate::embedders::{Embedder, http_client::HttpClient};
 use crate::error::{ContragError, Result};
 use crate::types::ConnectionTestResult;
 

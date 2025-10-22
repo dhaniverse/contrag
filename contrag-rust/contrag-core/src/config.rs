@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use crate::error::{ContragError, Result};
 
 /// Main configuration for ContRAG
@@ -198,7 +197,7 @@ pub fn create_default_config() -> ContragConfig {
 /// This is the main entry point for loading configuration.
 /// It reads the config file and merges it with environment variables.
 pub fn load_config(config_json: &str, env_vars: EnvVars) -> Result<ContragConfig> {
-    let mut config = load_config_from_json(config_json)?;
+    let config = load_config_from_json(config_json)?;
     validate_config(&config)?;
     Ok(config)
 }

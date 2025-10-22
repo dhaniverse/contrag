@@ -1,6 +1,5 @@
 use crate::entity::RagEntity;
-use crate::error::Result;
-use crate::types::{TextChunk, EntityNode};
+use crate::types::TextChunk;
 use crate::config::ChunkingConfig;
 
 /// Context builder for generating text chunks from entities

@@ -12,8 +12,9 @@ pub use crate::types::{EntityRelationship, RelationshipType};
 /// ```rust
 /// use contrag_core::prelude::*;
 /// use candid::{CandidType, Deserialize};
+/// use serde::Serialize;
 /// 
-/// #[derive(CandidType, Deserialize, Clone)]
+/// #[derive(CandidType, Deserialize, Serialize, Clone)]
 /// pub struct User {
 ///     pub id: String,
 ///     pub name: String,
