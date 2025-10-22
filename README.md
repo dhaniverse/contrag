@@ -1,6 +1,6 @@
 # ContRAG - Advanced RAG Integration Library
 
-[![npm version](https://badge.fury.io/js/contrag.svg)](https://badge.fury.io/js/contrag)
+[![npm version](https://badge.fury.io/js/contrag.svg)](https://badge.fury.io/js/contrag) [![crates.io](https://img.shields.io/crates/v/contrag-core.svg)](https://crates.io/crates/contrag-core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <!-- Architecture diagram -->
