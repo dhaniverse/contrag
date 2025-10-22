@@ -3,12 +3,19 @@
 [![npm version](https://badge.fury.io/js/contrag.svg)](https://badge.fury.io/js/contrag)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) systems that automatically introspect your existing database schema, build comprehensive entity relationship graphs, and create intelligent vector stores for personalized context retrieval.
+<!-- Architecture diagram -->
+![ContRAG Architecture](/assets/contrag-mermaid.png)
+
+**ContRAG** is a powerful library for building Retrieval-Augmented Generation (RAG) systems that automatically introspect your existing database schema, build comprehensive entity relationship graphs, and create intelligent vector stores for personalized context retrieval.
+
+**Available for both Web2 (TypeScript/Node.js) and Web3 (Rust/ICP)** — ContRAG brings production-ready RAG capabilities to traditional and decentralized applications.
 
 ## Table of Contents
 
 - [What's New in v1.3](#whats-new-in-v13)
 - [Key Features](#key-features)
+- [Why ContRAG for ICP](#why-contrag-for-icp)
+- [Architecture Overview](#architecture-overview)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Configuration](#configuration)
@@ -16,7 +23,6 @@ ContRAG is a powerful library for building Retrieval-Augmented Generation (RAG) 
 - [CLI Commands](#cli-commands)
 - [SDK Usage](#sdk-usage)
 - [Use Cases](#use-cases)
-- [Architecture](#architecture)
 - [Documentation](#documentation)
 - [Configuration Templates](#configuration-templates)
 - [Advanced Features](#advanced-features)
@@ -543,6 +549,91 @@ contrag query --namespace User:123 --query "text"  # Query context
 - **Financial Services**: Create investment recommendations based on user risk tolerance and stated preferences
 - **Healthcare**: Build patient-centric views combining medical records, appointments, treatments, and care preferences
 - **Finance**: Build comprehensive user profiles including transactions, accounts, interactions, and investment preferences
+
+## Why ContRAG for ICP
+
+The Internet Computer Protocol enables truly decentralized applications, but integrating AI with on-chain data has been a critical missing piece. **ContRAG solves this fundamental challenge** by bringing Retrieval-Augmented Generation directly to ICP canisters.
+
+### The Problem: AI & Web3 Don't Mix (Yet)
+
+ICP canisters hold rich, verifiable data — user profiles, transaction histories, DAO governance records, game state, NFT metadata — but leveraging this data for intelligent AI experiences has required compromising Web3 principles:
+
+- **Export to Centralized DBs**: Moving data off-chain to traditional vector databases defeats decentralization
+- **Trust External Services**: Relying on hosted AI platforms introduces central points of failure
+- **Lose Provenance**: Off-chain processing breaks the chain of verifiable computation
+- **High Latency**: Cross-network queries to external vector stores add unacceptable delays
+
+### The Solution: On-Chain RAG with External Intelligence
+
+ContRAG's Rust implementation (`contrag-core`) brings a hybrid architecture specifically designed for ICP:
+
+**On-Chain Components (Preserved Decentralization)**
+- Vector embeddings stored in canister stable memory
+- Entity data remains in canister state
+- Semantic search executes locally on-chain
+- All data ownership stays with the canister
+
+**Off-Chain Components (Leveraging Best AI Models)**
+- HTTP outcalls to OpenAI/Gemini for embedding generation only
+- No data persistence externally — embeddings returned to canister
+- Pay-per-use with ICP cycles (predictable costs)
+- Access to cutting-edge AI without compromising sovereignty
+
+### Key Benefits for ICP Ecosystem
+
+**1. True Data Sovereignty**
+- Vectors live in stable memory, never leave the canister
+- Survive upgrades through stable storage patterns
+- No external dependencies for storage or retrieval
+- Full cryptographic verifiability maintained
+
+**2. Intelligent Decentralized Apps**
+- **DeFi**: Personalized investment recommendations from transaction history
+- **DAOs**: Semantic search across proposals, votes, and governance discussions
+- **NFTs**: Content-based discovery and recommendation engines
+- **Social**: Context-aware feeds from on-chain social graphs
+- **Gaming**: Player profiling and dynamic content generation
+
+**3. Developer Experience**
+- Trait-based API (`RagEntity`) integrates with existing canister types
+- Automatic context building from entity relationships
+- Built-in chunking, embedding management, and vector search
+- Works with standard Rust/WASM canister patterns
+
+**4. Cost-Effective AI**
+- Vector storage: ~$5/GB/year (ICP stable memory pricing)
+- Embedding generation: Pay only for HTTP outcalls when needed
+- No recurring SaaS fees for external vector databases
+- Predictable cycle consumption model
+
+**5. Production-Ready Features**
+- Stable memory persistence (upgrade-safe)
+- Caching to minimize API costs
+- Inter-canister data source support
+- Configurable chunking strategies
+- Multiple embedder support (OpenAI, Gemini, custom)
+
+### Getting Started with ICP
+
+**For Canister Developers**
+```toml
+[dependencies]
+contrag-core = "0.1"
+```
+
+See the [Rust/ICP documentation](contrag-rust/README.md) and [example canister](contrag-rust/examples/user-canister) for complete implementation guides.
+
+**Learn More**: Read the [full ICP value proposition](ICP_VALUE_PROPOSITION.md) for detailed technical advantages, use cases, and market opportunities.
+
+## Architecture Overview
+
+ContRAG operates across two platforms with unified RAG principles:
+
+**Platform Selection Guide:**
+- **TypeScript/Web2**: Choose for traditional web apps, existing database integrations, and rapid prototyping with automatic schema introspection
+- **Rust/ICP Web3**: Choose for decentralized applications requiring on-chain data sovereignty, verifiable AI context, and censorship-resistant semantic search
+
+See the [full architecture comparison](ARCHITECTURE_DIAGRAM.md) for detailed technical diagrams and platform differences.
 
 ## Time Series Support
 
